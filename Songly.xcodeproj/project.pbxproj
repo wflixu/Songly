@@ -6,277 +6,509 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0A95CAC1C64EF95329C9977B /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08ADB09F56AF8A3EEF1491AD /* HomeViewModel.swift */; };
+		1212EAB8D7D7EEC2A029491C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 96C58E301600EEA39A231568 /* PrivacyInfo.xcprivacy */; };
+		24059B89A0B7F8CA1A5547C0 /* Debug.xcconfig.example in Resources */ = {isa = PBXBuildFile; fileRef = 6A104D8CF2C75D68D27B3574 /* Debug.xcconfig.example */; };
+		2B42B76293C91002039C022F /* MusicKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413603C3B9605AD9F42C9C48 /* MusicKitService.swift */; };
+		37BAE319343901825DAD1DA1 /* SonglyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28C6622E7DC7F2D1A48E2DBD /* SonglyUITests.swift */; };
+		3853066FF916B83B4263F872 /* QuickPickViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20887D01A79EBE55A4130055 /* QuickPickViewModel.swift */; };
+		3D82FBA07BF43EC497824F5F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01F89F77CC564C5764852808 /* OnboardingView.swift */; };
+		486B0930B571AFC66E3B23C6 /* RecommendationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D19E60158AA26E38C2A072C /* RecommendationStrategy.swift */; };
+		5774CB032985AAEC82CBC5B9 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E86C9220E202A192DD65B8 /* AppConfig.swift */; };
+		5C7DF9ECB36A39609DAE07B4 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B732CCAECD8B3048A1F519 /* NetworkMonitor.swift */; };
+		5E2143B1FD51D77C7B02288D /* QuickPickView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20BB756EEA1E5171F4ABCDE8 /* QuickPickView.swift */; };
+		6B21DA3A1A653724C73D555B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A75045BA27FEB10D9E16C645 /* Assets.xcassets */; };
+		6F2F8D31F66E1B79828E365E /* SonglyUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D54452F19999EC354F46AB3 /* SonglyUITestsLaunchTests.swift */; };
+		71086B2C6EBE7BA659F1A17A /* SonglyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A42B1768A9C745068C07A2 /* SonglyTests.swift */; };
+		74C9A7EC2059780CBED1FDB2 /* StyleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D4DFCEBE0318269BC53961E /* StyleButton.swift */; };
+		7794CEB7D1B72AB3A2F168E2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618AA8EAA7057B298D7D3932 /* SettingsView.swift */; };
+		78FA3181303C4764B346EF34 /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BA290C41099656E6A563B48 /* LLMService.swift */; };
+		795F08DD519D761B90D8746D /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = E45438E6D5F8200931811381 /* AppEnvironment.swift */; };
+		925ADC78D703778A9A8B8C72 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8C974AF17F41608A1B158DEC /* Localizable.xcstrings */; };
+		992DC85E31D3BCB8DB3A0F2D /* RecommendationResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C0B305889488ED01A221F9 /* RecommendationResultView.swift */; };
+		9F062352D9871A57E024706D /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17CFCF03DD9071B6B3D580BA /* HomeView.swift */; };
+		A02DF4EC18DF859E74E4E734 /* RecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5FBE63553377714E9032FF /* RecommendationEngine.swift */; };
+		A0E08186F4148DF255B20981 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D5FBCEDEA1EFAE7992B7DF /* NotificationService.swift */; };
+		A12F91F33F55D6133B651C15 /* BackgroundTaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A375634CDF9C86F4B86D5F0B /* BackgroundTaskService.swift */; };
+		AB3BB123E8927D37EF60AAA2 /* RecommendationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873D900B40B7270AC99F5C1A /* RecommendationRecord.swift */; };
+		BD5DB522918540A3F04F34DA /* PromptBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A3E71D16FF2A1E7C834E51 /* PromptBuilder.swift */; };
+		D7A5ACEF3BFDA28DBAC381F0 /* SonglyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5683F6BC3E52346652CB591 /* SonglyApp.swift */; };
+		DC914C8B9438C04FF05BC1E4 /* DateFormatter+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB879AB742C18E085F944BB0 /* DateFormatter+Extensions.swift */; };
+		E1EFB26B81273719B0137AEC /* TrackItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457791E911116B8F01C1FA1E /* TrackItem.swift */; };
+		E312AFF31CF33ABFB4706BB3 /* PlaylistService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A607B8C47F286DDF37FC89B /* PlaylistService.swift */; };
+		E8E54666B1AF1AAC64495B5B /* TrackRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1406E422B4B094A80DCBC43B /* TrackRow.swift */; };
+		F5383CFA411513A99AA9D8E8 /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8D6E45EE067C6184AD9D74 /* UserPreferences.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
-		5CE5C0933003BC650064995C /* PBXContainerItemProxy */ = {
+		8D13C9E25444935639308C60 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 5CE5C07B3003BC630064995C /* Project object */;
+			containerPortal = AAD4F790CCCE63BA6EB21A4F /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 5CE5C0823003BC630064995C;
+			remoteGlobalIDString = C88309C187BEE137A232A92D;
 			remoteInfo = Songly;
 		};
-		5CE5C09D3003BC650064995C /* PBXContainerItemProxy */ = {
+		D45CDBDD2E00CE1ECD8BABD8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 5CE5C07B3003BC630064995C /* Project object */;
+			containerPortal = AAD4F790CCCE63BA6EB21A4F /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 5CE5C0823003BC630064995C;
+			remoteGlobalIDString = C88309C187BEE137A232A92D;
 			remoteInfo = Songly;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		5CE5C0833003BC630064995C /* Songly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Songly.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5CE5C0923003BC650064995C /* SonglyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SonglyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5CE5C09C3003BC650064995C /* SonglyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SonglyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		01F89F77CC564C5764852808 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		08ADB09F56AF8A3EEF1491AD /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		0BA290C41099656E6A563B48 /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
+		0D19E60158AA26E38C2A072C /* RecommendationStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationStrategy.swift; sourceTree = "<group>"; };
+		1034DB9A0B9795D8A176235F /* SonglyTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SonglyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1406E422B4B094A80DCBC43B /* TrackRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRow.swift; sourceTree = "<group>"; };
+		17CFCF03DD9071B6B3D580BA /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		1D4DFCEBE0318269BC53961E /* StyleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleButton.swift; sourceTree = "<group>"; };
+		20887D01A79EBE55A4130055 /* QuickPickViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickPickViewModel.swift; sourceTree = "<group>"; };
+		20BB756EEA1E5171F4ABCDE8 /* QuickPickView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickPickView.swift; sourceTree = "<group>"; };
+		214B0142C0915AAE504A8A69 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		28C6622E7DC7F2D1A48E2DBD /* SonglyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SonglyUITests.swift; sourceTree = "<group>"; };
+		2E8D6E45EE067C6184AD9D74 /* UserPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferences.swift; sourceTree = "<group>"; };
+		3D54452F19999EC354F46AB3 /* SonglyUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SonglyUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		413603C3B9605AD9F42C9C48 /* MusicKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicKitService.swift; sourceTree = "<group>"; };
+		457791E911116B8F01C1FA1E /* TrackItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackItem.swift; sourceTree = "<group>"; };
+		53E86C9220E202A192DD65B8 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		5A607B8C47F286DDF37FC89B /* PlaylistService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistService.swift; sourceTree = "<group>"; };
+		618AA8EAA7057B298D7D3932 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		6483D2D2704433FEBEF4A41F /* Songly.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Songly.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6A104D8CF2C75D68D27B3574 /* Debug.xcconfig.example */ = {isa = PBXFileReference; path = Debug.xcconfig.example; sourceTree = "<group>"; };
+		72C0B305889488ED01A221F9 /* RecommendationResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationResultView.swift; sourceTree = "<group>"; };
+		73A3E71D16FF2A1E7C834E51 /* PromptBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptBuilder.swift; sourceTree = "<group>"; };
+		873D900B40B7270AC99F5C1A /* RecommendationRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationRecord.swift; sourceTree = "<group>"; };
+		8A5FBE63553377714E9032FF /* RecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationEngine.swift; sourceTree = "<group>"; };
+		8C974AF17F41608A1B158DEC /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		96C58E301600EEA39A231568 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A375634CDF9C86F4B86D5F0B /* BackgroundTaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskService.swift; sourceTree = "<group>"; };
+		A5683F6BC3E52346652CB591 /* SonglyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SonglyApp.swift; sourceTree = "<group>"; };
+		A6B732CCAECD8B3048A1F519 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		A75045BA27FEB10D9E16C645 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AEAB70B46CC7211348C4BA0B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C8A42B1768A9C745068C07A2 /* SonglyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SonglyTests.swift; sourceTree = "<group>"; };
+		CB879AB742C18E085F944BB0 /* DateFormatter+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DateFormatter+Extensions.swift"; sourceTree = "<group>"; };
+		D1E969B1A8661BD77B616C22 /* SonglyUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SonglyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E45438E6D5F8200931811381 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		F9D5FBCEDEA1EFAE7992B7DF /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		5CE5C0853003BC630064995C /* Songly */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Songly;
-			sourceTree = "<group>";
-		};
-		5CE5C0953003BC650064995C /* SonglyTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
+/* Begin PBXGroup section */
+		0E70326CC807C93F044B1DFF /* SonglyTests */ = {
+			isa = PBXGroup;
+			children = (
+				C8A42B1768A9C745068C07A2 /* SonglyTests.swift */,
+			);
 			path = SonglyTests;
 			sourceTree = "<group>";
 		};
-		5CE5C09F3003BC650064995C /* SonglyUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
+		1429CC77276D2F0FD3C82CF3 /* SonglyUITests */ = {
+			isa = PBXGroup;
+			children = (
+				28C6622E7DC7F2D1A48E2DBD /* SonglyUITests.swift */,
+				3D54452F19999EC354F46AB3 /* SonglyUITestsLaunchTests.swift */,
+			);
 			path = SonglyUITests;
 			sourceTree = "<group>";
 		};
-/* End PBXFileSystemSynchronizedRootGroup section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		5CE5C0803003BC630064995C /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		5CE5C08F3003BC650064995C /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		5CE5C0993003BC650064995C /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXGroup section */
-		5CE5C07A3003BC630064995C = {
+		22C5BF82AD4B5CCF40F5F014 /* Songly */ = {
 			isa = PBXGroup;
 			children = (
-				5CE5C0853003BC630064995C /* Songly */,
-				5CE5C0953003BC650064995C /* SonglyTests */,
-				5CE5C09F3003BC650064995C /* SonglyUITests */,
-				5CE5C0843003BC630064995C /* Products */,
+				A75045BA27FEB10D9E16C645 /* Assets.xcassets */,
+				AEAB70B46CC7211348C4BA0B /* Info.plist */,
+				96C58E301600EEA39A231568 /* PrivacyInfo.xcprivacy */,
+				A5683F6BC3E52346652CB591 /* SonglyApp.swift */,
+				94FF1B1D71B11ACA78D86B3A /* App */,
+				C97E8B3718D5BA0FB6FB5F1F /* Config */,
+				731818F5A40113CED5AE77F4 /* Localization */,
+				7A0AC4661F7147160507E807 /* Models */,
+				903F32F3CD8088C52B62471A /* Services */,
+				297ACF0D33CA25CA4BA2891E /* Utils */,
+				E004E5D9E01D92132D460ECF /* ViewModels */,
+				B2A23546D54A8799B1C2DF77 /* Views */,
+			);
+			path = Songly;
+			sourceTree = "<group>";
+		};
+		297ACF0D33CA25CA4BA2891E /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				CB879AB742C18E085F944BB0 /* DateFormatter+Extensions.swift */,
+				73A3E71D16FF2A1E7C834E51 /* PromptBuilder.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		339C1DF4820D5B6FAE96BA7B = {
+			isa = PBXGroup;
+			children = (
+				22C5BF82AD4B5CCF40F5F014 /* Songly */,
+				0E70326CC807C93F044B1DFF /* SonglyTests */,
+				1429CC77276D2F0FD3C82CF3 /* SonglyUITests */,
+				BF819A07D53A725B9191D92E /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		5CE5C0843003BC630064995C /* Products */ = {
+		731818F5A40113CED5AE77F4 /* Localization */ = {
 			isa = PBXGroup;
 			children = (
-				5CE5C0833003BC630064995C /* Songly.app */,
-				5CE5C0923003BC650064995C /* SonglyTests.xctest */,
-				5CE5C09C3003BC650064995C /* SonglyUITests.xctest */,
+				8C974AF17F41608A1B158DEC /* Localizable.xcstrings */,
+			);
+			path = Localization;
+			sourceTree = "<group>";
+		};
+		7A0AC4661F7147160507E807 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				873D900B40B7270AC99F5C1A /* RecommendationRecord.swift */,
+				0D19E60158AA26E38C2A072C /* RecommendationStrategy.swift */,
+				457791E911116B8F01C1FA1E /* TrackItem.swift */,
+				2E8D6E45EE067C6184AD9D74 /* UserPreferences.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		903F32F3CD8088C52B62471A /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A375634CDF9C86F4B86D5F0B /* BackgroundTaskService.swift */,
+				0BA290C41099656E6A563B48 /* LLMService.swift */,
+				413603C3B9605AD9F42C9C48 /* MusicKitService.swift */,
+				A6B732CCAECD8B3048A1F519 /* NetworkMonitor.swift */,
+				F9D5FBCEDEA1EFAE7992B7DF /* NotificationService.swift */,
+				5A607B8C47F286DDF37FC89B /* PlaylistService.swift */,
+				8A5FBE63553377714E9032FF /* RecommendationEngine.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		94FF1B1D71B11ACA78D86B3A /* App */ = {
+			isa = PBXGroup;
+			children = (
+				53E86C9220E202A192DD65B8 /* AppConfig.swift */,
+				E45438E6D5F8200931811381 /* AppEnvironment.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		B2A23546D54A8799B1C2DF77 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				17CFCF03DD9071B6B3D580BA /* HomeView.swift */,
+				01F89F77CC564C5764852808 /* OnboardingView.swift */,
+				20BB756EEA1E5171F4ABCDE8 /* QuickPickView.swift */,
+				72C0B305889488ED01A221F9 /* RecommendationResultView.swift */,
+				618AA8EAA7057B298D7D3932 /* SettingsView.swift */,
+				C954BF295A2B78306FB1FDD2 /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		BF819A07D53A725B9191D92E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6483D2D2704433FEBEF4A41F /* Songly.app */,
+				1034DB9A0B9795D8A176235F /* SonglyTests.xctest */,
+				D1E969B1A8661BD77B616C22 /* SonglyUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C954BF295A2B78306FB1FDD2 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				1D4DFCEBE0318269BC53961E /* StyleButton.swift */,
+				1406E422B4B094A80DCBC43B /* TrackRow.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		C97E8B3718D5BA0FB6FB5F1F /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				214B0142C0915AAE504A8A69 /* Debug.xcconfig */,
+				6A104D8CF2C75D68D27B3574 /* Debug.xcconfig.example */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		E004E5D9E01D92132D460ECF /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				08ADB09F56AF8A3EEF1491AD /* HomeViewModel.swift */,
+				20887D01A79EBE55A4130055 /* QuickPickViewModel.swift */,
+			);
+			path = ViewModels;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5CE5C0823003BC630064995C /* Songly */ = {
+		371C872EF7A003BD55659917 /* SonglyTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5CE5C0A63003BC650064995C /* Build configuration list for PBXNativeTarget "Songly" */;
+			buildConfigurationList = A54582B9011F1511E69CC2DD /* Build configuration list for PBXNativeTarget "SonglyTests" */;
 			buildPhases = (
-				5CE5C07F3003BC630064995C /* Sources */,
-				5CE5C0803003BC630064995C /* Frameworks */,
-				5CE5C0813003BC630064995C /* Resources */,
+				A3BB8987528DA0A794344195 /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				5CE5C0853003BC630064995C /* Songly */,
-			);
-			name = Songly;
-			packageProductDependencies = (
-			);
-			productName = Songly;
-			productReference = 5CE5C0833003BC630064995C /* Songly.app */;
-			productType = "com.apple.product-type.application";
-		};
-		5CE5C0913003BC650064995C /* SonglyTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 5CE5C0A93003BC650064995C /* Build configuration list for PBXNativeTarget "SonglyTests" */;
-			buildPhases = (
-				5CE5C08E3003BC650064995C /* Sources */,
-				5CE5C08F3003BC650064995C /* Frameworks */,
-				5CE5C0903003BC650064995C /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				5CE5C0943003BC650064995C /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				5CE5C0953003BC650064995C /* SonglyTests */,
+				4438C38E060DB944E9068B3A /* PBXTargetDependency */,
 			);
 			name = SonglyTests;
 			packageProductDependencies = (
 			);
 			productName = SonglyTests;
-			productReference = 5CE5C0923003BC650064995C /* SonglyTests.xctest */;
+			productReference = 1034DB9A0B9795D8A176235F /* SonglyTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		5CE5C09B3003BC650064995C /* SonglyUITests */ = {
+		760BAFE5A6BEFEE462029BA4 /* SonglyUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5CE5C0AC3003BC650064995C /* Build configuration list for PBXNativeTarget "SonglyUITests" */;
+			buildConfigurationList = 18D9C39898DA61D8D94AC0F7 /* Build configuration list for PBXNativeTarget "SonglyUITests" */;
 			buildPhases = (
-				5CE5C0983003BC650064995C /* Sources */,
-				5CE5C0993003BC650064995C /* Frameworks */,
-				5CE5C09A3003BC650064995C /* Resources */,
+				59FD0E318B7C42756DC53B28 /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				5CE5C09E3003BC650064995C /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				5CE5C09F3003BC650064995C /* SonglyUITests */,
+				47E2D7519B9754C8A8E40461 /* PBXTargetDependency */,
 			);
 			name = SonglyUITests;
 			packageProductDependencies = (
 			);
 			productName = SonglyUITests;
-			productReference = 5CE5C09C3003BC650064995C /* SonglyUITests.xctest */;
+			productReference = D1E969B1A8661BD77B616C22 /* SonglyUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		C88309C187BEE137A232A92D /* Songly */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4A2D2032C017070C404EB234 /* Build configuration list for PBXNativeTarget "Songly" */;
+			buildPhases = (
+				7F332EA51C6B9E270E71546F /* Sources */,
+				6E3A82950D75D224A0DE54E5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Songly;
+			packageProductDependencies = (
+			);
+			productName = Songly;
+			productReference = 6483D2D2704433FEBEF4A41F /* Songly.app */;
+			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		5CE5C07B3003BC630064995C /* Project object */ = {
+		AAD4F790CCCE63BA6EB21A4F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2650;
-				LastUpgradeCheck = 2650;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
 				TargetAttributes = {
-					5CE5C0823003BC630064995C = {
-						CreatedOnToolsVersion = 26.5;
+					371C872EF7A003BD55659917 = {
+						DevelopmentTeam = 4L3563XCBN;
 					};
-					5CE5C0913003BC650064995C = {
-						CreatedOnToolsVersion = 26.5;
-						TestTargetID = 5CE5C0823003BC630064995C;
+					760BAFE5A6BEFEE462029BA4 = {
+						DevelopmentTeam = 4L3563XCBN;
+						TestTargetID = C88309C187BEE137A232A92D;
 					};
-					5CE5C09B3003BC650064995C = {
-						CreatedOnToolsVersion = 26.5;
-						TestTargetID = 5CE5C0823003BC630064995C;
+					C88309C187BEE137A232A92D = {
+						DevelopmentTeam = 4L3563XCBN;
 					};
 				};
 			};
-			buildConfigurationList = 5CE5C07E3003BC630064995C /* Build configuration list for PBXProject "Songly" */;
+			buildConfigurationList = 7DB60EEDFEA264D3D48153D8 /* Build configuration list for PBXProject "Songly" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
 				Base,
+				en,
+				"zh-Hans",
 			);
-			mainGroup = 5CE5C07A3003BC630064995C;
+			mainGroup = 339C1DF4820D5B6FAE96BA7B;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 5CE5C0843003BC630064995C /* Products */;
+			productRefGroup = BF819A07D53A725B9191D92E /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5CE5C0823003BC630064995C /* Songly */,
-				5CE5C0913003BC650064995C /* SonglyTests */,
-				5CE5C09B3003BC650064995C /* SonglyUITests */,
+				C88309C187BEE137A232A92D /* Songly */,
+				371C872EF7A003BD55659917 /* SonglyTests */,
+				760BAFE5A6BEFEE462029BA4 /* SonglyUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		5CE5C0813003BC630064995C /* Resources */ = {
+		6E3A82950D75D224A0DE54E5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		5CE5C0903003BC650064995C /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		5CE5C09A3003BC650064995C /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+				6B21DA3A1A653724C73D555B /* Assets.xcassets in Resources */,
+				24059B89A0B7F8CA1A5547C0 /* Debug.xcconfig.example in Resources */,
+				925ADC78D703778A9A8B8C72 /* Localizable.xcstrings in Resources */,
+				1212EAB8D7D7EEC2A029491C /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		5CE5C07F3003BC630064995C /* Sources */ = {
+		59FD0E318B7C42756DC53B28 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				37BAE319343901825DAD1DA1 /* SonglyUITests.swift in Sources */,
+				6F2F8D31F66E1B79828E365E /* SonglyUITestsLaunchTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		5CE5C08E3003BC650064995C /* Sources */ = {
+		7F332EA51C6B9E270E71546F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5774CB032985AAEC82CBC5B9 /* AppConfig.swift in Sources */,
+				795F08DD519D761B90D8746D /* AppEnvironment.swift in Sources */,
+				A12F91F33F55D6133B651C15 /* BackgroundTaskService.swift in Sources */,
+				DC914C8B9438C04FF05BC1E4 /* DateFormatter+Extensions.swift in Sources */,
+				9F062352D9871A57E024706D /* HomeView.swift in Sources */,
+				0A95CAC1C64EF95329C9977B /* HomeViewModel.swift in Sources */,
+				78FA3181303C4764B346EF34 /* LLMService.swift in Sources */,
+				2B42B76293C91002039C022F /* MusicKitService.swift in Sources */,
+				5C7DF9ECB36A39609DAE07B4 /* NetworkMonitor.swift in Sources */,
+				A0E08186F4148DF255B20981 /* NotificationService.swift in Sources */,
+				3D82FBA07BF43EC497824F5F /* OnboardingView.swift in Sources */,
+				E312AFF31CF33ABFB4706BB3 /* PlaylistService.swift in Sources */,
+				BD5DB522918540A3F04F34DA /* PromptBuilder.swift in Sources */,
+				5E2143B1FD51D77C7B02288D /* QuickPickView.swift in Sources */,
+				3853066FF916B83B4263F872 /* QuickPickViewModel.swift in Sources */,
+				A02DF4EC18DF859E74E4E734 /* RecommendationEngine.swift in Sources */,
+				AB3BB123E8927D37EF60AAA2 /* RecommendationRecord.swift in Sources */,
+				992DC85E31D3BCB8DB3A0F2D /* RecommendationResultView.swift in Sources */,
+				486B0930B571AFC66E3B23C6 /* RecommendationStrategy.swift in Sources */,
+				7794CEB7D1B72AB3A2F168E2 /* SettingsView.swift in Sources */,
+				D7A5ACEF3BFDA28DBAC381F0 /* SonglyApp.swift in Sources */,
+				74C9A7EC2059780CBED1FDB2 /* StyleButton.swift in Sources */,
+				E1EFB26B81273719B0137AEC /* TrackItem.swift in Sources */,
+				E8E54666B1AF1AAC64495B5B /* TrackRow.swift in Sources */,
+				F5383CFA411513A99AA9D8E8 /* UserPreferences.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		5CE5C0983003BC650064995C /* Sources */ = {
+		A3BB8987528DA0A794344195 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				71086B2C6EBE7BA659F1A17A /* SonglyTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		5CE5C0943003BC650064995C /* PBXTargetDependency */ = {
+		4438C38E060DB944E9068B3A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5CE5C0823003BC630064995C /* Songly */;
-			targetProxy = 5CE5C0933003BC650064995C /* PBXContainerItemProxy */;
+			target = C88309C187BEE137A232A92D /* Songly */;
+			targetProxy = D45CDBDD2E00CE1ECD8BABD8 /* PBXContainerItemProxy */;
 		};
-		5CE5C09E3003BC650064995C /* PBXTargetDependency */ = {
+		47E2D7519B9754C8A8E40461 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5CE5C0823003BC630064995C /* Songly */;
-			targetProxy = 5CE5C09D3003BC650064995C /* PBXContainerItemProxy */;
+			target = C88309C187BEE137A232A92D /* Songly */;
+			targetProxy = 8D13C9E25444935639308C60 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		5CE5C0A43003BC650064995C /* Debug */ = {
+		083E9E33F90B0AF693034D18 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 4L3563XCBN;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.SonglyUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Songly;
+			};
+			name = Debug;
+		};
+		5C6A1207E3B23F7F5F000F71 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 4L3563XCBN;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.SonglyTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Songly.app/Songly";
+			};
+			name = Release;
+		};
+		A7C29F8EF3BEBCAD806A3286 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 214B0142C0915AAE504A8A69 /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEEPSEEK_API_KEY = "$(DEEPSEEK_API_KEY)";
+				DEVELOPMENT_TEAM = 4L3563XCBN;
+				INFOPLIST_FILE = Songly/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.Songly;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C890E0B1795560C9D0B0F91C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 4L3563XCBN;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.SonglyTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Songly.app/Songly";
+			};
+			name = Debug;
+		};
+		E10B4BD9F8386F467EAF416C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -304,17 +536,15 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 4L3563XCBN;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
 					"$(inherited)",
+					"DEBUG=1",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -323,24 +553,47 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
-		5CE5C0A53003BC650064995C /* Release */ = {
+		EDA40FD5D73BBE0010CA0FB0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 214B0142C0915AAE504A8A69 /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEEPSEEK_API_KEY = "$(DEEPSEEK_API_KEY)";
+				DEVELOPMENT_TEAM = 4L3563XCBN;
+				INFOPLIST_FILE = Songly/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.Songly;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F655E360AB8E951C5F9CE309 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -368,11 +621,9 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 4L3563XCBN;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -381,158 +632,30 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				VALIDATE_PRODUCT = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
-		5CE5C0A73003BC650064995C /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4L3563XCBN;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.Songly;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		5CE5C0A83003BC650064995C /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4L3563XCBN;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.Songly;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		5CE5C0AA3003BC650064995C /* Debug */ = {
+		F97A9C02E5C65C060156AE68 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4L3563XCBN;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.SonglyTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Songly.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Songly";
-			};
-			name = Debug;
-		};
-		5CE5C0AB3003BC650064995C /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4L3563XCBN;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.SonglyTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Songly.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Songly";
-			};
-			name = Release;
-		};
-		5CE5C0AD3003BC650064995C /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4L3563XCBN;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.SonglyUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = Songly;
-			};
-			name = Debug;
-		};
-		5CE5C0AE3003BC650064995C /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4L3563XCBN;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.SonglyUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Songly;
 			};
@@ -541,43 +664,43 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5CE5C07E3003BC630064995C /* Build configuration list for PBXProject "Songly" */ = {
+		18D9C39898DA61D8D94AC0F7 /* Build configuration list for PBXNativeTarget "SonglyUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5CE5C0A43003BC650064995C /* Debug */,
-				5CE5C0A53003BC650064995C /* Release */,
+				083E9E33F90B0AF693034D18 /* Debug */,
+				F97A9C02E5C65C060156AE68 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		5CE5C0A63003BC650064995C /* Build configuration list for PBXNativeTarget "Songly" */ = {
+		4A2D2032C017070C404EB234 /* Build configuration list for PBXNativeTarget "Songly" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5CE5C0A73003BC650064995C /* Debug */,
-				5CE5C0A83003BC650064995C /* Release */,
+				A7C29F8EF3BEBCAD806A3286 /* Debug */,
+				EDA40FD5D73BBE0010CA0FB0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		5CE5C0A93003BC650064995C /* Build configuration list for PBXNativeTarget "SonglyTests" */ = {
+		7DB60EEDFEA264D3D48153D8 /* Build configuration list for PBXProject "Songly" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5CE5C0AA3003BC650064995C /* Debug */,
-				5CE5C0AB3003BC650064995C /* Release */,
+				E10B4BD9F8386F467EAF416C /* Debug */,
+				F655E360AB8E951C5F9CE309 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		5CE5C0AC3003BC650064995C /* Build configuration list for PBXNativeTarget "SonglyUITests" */ = {
+		A54582B9011F1511E69CC2DD /* Build configuration list for PBXNativeTarget "SonglyTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5CE5C0AD3003BC650064995C /* Debug */,
-				5CE5C0AE3003BC650064995C /* Release */,
+				C890E0B1795560C9D0B0F91C /* Debug */,
+				5C6A1207E3B23F7F5F000F71 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 5CE5C07B3003BC630064995C /* Project object */;
+	rootObject = AAD4F790CCCE63BA6EB21A4F /* Project object */;
 }

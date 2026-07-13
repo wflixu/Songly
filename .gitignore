@@ -1,0 +1,18 @@
+# Xcode
+*.xcuserdata
+*.xcworkspace/xcuserdata
+DerivedData/
+*.xcbkptlist
+
+# XcodeGen
+Songly.xcodeproj/
+
+# Config (API Keys)
+*.xcconfig
+!*.xcconfig.example
+
+# macOS
+.DS_Store
+
+# SwiftPM
+Package.resolved

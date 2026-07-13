@@ -9,8 +9,8 @@ options:
 
 settings:
   base:
-    SWIFT_VERSION: "5.0"
-    TARGETED_DEVICE_FAMILY: "1,2"
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1"
 
 targets:
   Songly:
@@ -18,13 +18,28 @@ targets:
     platform: iOS
     sources:
       - path: Songly
+    configFiles:
+      Debug: Songly/Config/Debug.xcconfig
+      Release: Songly/Config/Debug.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: cn.wflixu.Songly
-        GENERATE_INFOPLIST_FILE: YES
         DEVELOPMENT_TEAM: 4L3563XCBN
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: 1
+        # Custom build setting — read via AppEnvironment
+        DEEPSEEK_API_KEY: $(DEEPSEEK_API_KEY)
+    info:
+      path: Songly/Info.plist
+      properties:
+        NSAppleMusicUsageDescription: "乐遇需要访问你的 Apple Music 收藏，以便 AI 为你生成个性化推荐歌单。"
+        BGTaskSchedulerPermittedIdentifiers:
+          - cn.wflixu.Songly.dailyRecommendation
+        UIBackgroundModes:
+          - fetch
+        CFBundleDevelopmentRegion: zh_CN
+        CFBundleDisplayName: 乐遇
+        DEEPSEEK_API_KEY: $(DEEPSEEK_API_KEY)
 
   SonglyTests:
     type: bundle.unit-test
