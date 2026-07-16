@@ -45,34 +45,32 @@ struct ContentView: View {
     @State private var selectedTab = 0
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            NavigationStack {
+        NavigationStack {
+            TabView(selection: $selectedTab) {
                 HomeView()
                     .environment(homeVM)
                     .navigationTitle("乐遇")
                     .navigationBarTitleDisplayMode(.inline)
-            }
-            .tabItem { Label("首页", systemImage: "music.note.house.fill") }
-            .tag(0)
+                    .tabItem { Label("首页", systemImage: "music.note.house.fill") }
+                    .tag(0)
 
-            NavigationStack {
                 SettingsView()
                     .navigationTitle("设置")
                     .navigationBarTitleDisplayMode(.inline)
+                    .tabItem { Label("设置", systemImage: "gear") }
+                    .tag(1)
             }
-            .tabItem { Label("设置", systemImage: "gear") }
-            .tag(1)
-        }
-        .onAppear {
-            let bar = UITabBarAppearance()
-            bar.configureWithDefaultBackground()
-            UITabBar.appearance().standardAppearance = bar
-            UITabBar.appearance().scrollEdgeAppearance = bar
+            .onAppear {
+                let bar = UITabBarAppearance()
+                bar.configureWithDefaultBackground()
+                UITabBar.appearance().standardAppearance = bar
+                UITabBar.appearance().scrollEdgeAppearance = bar
 
-            let bg = BackgroundTaskService(engine: engine)
-            bg.register()
-            bg.schedule()
-            Task { _ = await NotificationService.shared.requestPermission() }
+                let bg = BackgroundTaskService(engine: engine)
+                bg.register()
+                bg.schedule()
+                Task { _ = await NotificationService.shared.requestPermission() }
+            }
         }
     }
 }

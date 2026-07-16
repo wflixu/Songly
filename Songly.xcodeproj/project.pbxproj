@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 90;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -78,14 +78,14 @@
 		53E86C9220E202A192DD65B8 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		5A607B8C47F286DDF37FC89B /* PlaylistService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistService.swift; sourceTree = "<group>"; };
 		618AA8EAA7057B298D7D3932 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		6483D2D2704433FEBEF4A41F /* Songly.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Songly.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		6A104D8CF2C75D68D27B3574 /* Debug.xcconfig.example */ = {isa = PBXFileReference; path = Debug.xcconfig.example; sourceTree = "<group>"; };
+		6483D2D2704433FEBEF4A41F /* Songly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Songly.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6A104D8CF2C75D68D27B3574 /* Debug.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text; path = Debug.xcconfig.example; sourceTree = "<group>"; };
 		72C0B305889488ED01A221F9 /* RecommendationResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationResultView.swift; sourceTree = "<group>"; };
 		73A3E71D16FF2A1E7C834E51 /* PromptBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptBuilder.swift; sourceTree = "<group>"; };
 		873D900B40B7270AC99F5C1A /* RecommendationRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationRecord.swift; sourceTree = "<group>"; };
 		8A5FBE63553377714E9032FF /* RecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationEngine.swift; sourceTree = "<group>"; };
 		8C974AF17F41608A1B158DEC /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
-		96C58E301600EEA39A231568 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		96C58E301600EEA39A231568 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		A375634CDF9C86F4B86D5F0B /* BackgroundTaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskService.swift; sourceTree = "<group>"; };
 		A5683F6BC3E52346652CB591 /* SonglyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SonglyApp.swift; sourceTree = "<group>"; };
 		A6B732CCAECD8B3048A1F519 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
@@ -261,8 +261,6 @@
 				4438C38E060DB944E9068B3A /* PBXTargetDependency */,
 			);
 			name = SonglyTests;
-			packageProductDependencies = (
-			);
 			productName = SonglyTests;
 			productReference = 1034DB9A0B9795D8A176235F /* SonglyTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -279,8 +277,6 @@
 				47E2D7519B9754C8A8E40461 /* PBXTargetDependency */,
 			);
 			name = SonglyUITests;
-			packageProductDependencies = (
-			);
 			productName = SonglyUITests;
 			productReference = D1E969B1A8661BD77B616C22 /* SonglyUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -294,11 +290,7 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			name = Songly;
-			packageProductDependencies = (
-			);
 			productName = Songly;
 			productReference = 6483D2D2704433FEBEF4A41F /* Songly.app */;
 			productType = "com.apple.product-type.application";
@@ -334,7 +326,7 @@
 			);
 			mainGroup = 339C1DF4820D5B6FAE96BA7B;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
+			preferredProjectObjectVersion = 90;
 			productRefGroup = BF819A07D53A725B9191D92E /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -349,30 +341,25 @@
 /* Begin PBXResourcesBuildPhase section */
 		6E3A82950D75D224A0DE54E5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				6B21DA3A1A653724C73D555B /* Assets.xcassets in Resources */,
 				24059B89A0B7F8CA1A5547C0 /* Debug.xcconfig.example in Resources */,
 				925ADC78D703778A9A8B8C72 /* Localizable.xcstrings in Resources */,
 				1212EAB8D7D7EEC2A029491C /* PrivacyInfo.xcprivacy in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		59FD0E318B7C42756DC53B28 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				37BAE319343901825DAD1DA1 /* SonglyUITests.swift in Sources */,
 				6F2F8D31F66E1B79828E365E /* SonglyUITestsLaunchTests.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		7F332EA51C6B9E270E71546F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				5774CB032985AAEC82CBC5B9 /* AppConfig.swift in Sources */,
 				795F08DD519D761B90D8746D /* AppEnvironment.swift in Sources */,
@@ -400,15 +387,12 @@
 				E8E54666B1AF1AAC64495B5B /* TrackRow.swift in Sources */,
 				F5383CFA411513A99AA9D8E8 /* UserPreferences.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A3BB8987528DA0A794344195 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				71086B2C6EBE7BA659F1A17A /* SonglyTests.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
@@ -426,7 +410,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		083E9E33F90B0AF693034D18 /* Debug */ = {
+		083E9E33F90B0AF693034D18 /* Debug configuration for PBXNativeTarget "SonglyUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -444,7 +428,7 @@
 			};
 			name = Debug;
 		};
-		5C6A1207E3B23F7F5F000F71 /* Release */ = {
+		5C6A1207E3B23F7F5F000F71 /* Release configuration for PBXNativeTarget "SonglyTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -462,7 +446,7 @@
 			};
 			name = Release;
 		};
-		A7C29F8EF3BEBCAD806A3286 /* Debug */ = {
+		A7C29F8EF3BEBCAD806A3286 /* Debug configuration for PBXNativeTarget "Songly" */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 214B0142C0915AAE504A8A69 /* Debug.xcconfig */;
 			buildSettings = {
@@ -472,6 +456,8 @@
 				DEEPSEEK_API_KEY = "$(DEEPSEEK_API_KEY)";
 				DEVELOPMENT_TEAM = 4L3563XCBN;
 				INFOPLIST_FILE = Songly/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "乐遇";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -479,11 +465,15 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.Songly;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
-		C890E0B1795560C9D0B0F91C /* Debug */ = {
+		C890E0B1795560C9D0B0F91C /* Debug configuration for PBXNativeTarget "SonglyTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -501,7 +491,7 @@
 			};
 			name = Debug;
 		};
-		E10B4BD9F8386F467EAF416C /* Debug */ = {
+		E10B4BD9F8386F467EAF416C /* Debug configuration for PBXProject "Songly" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -565,7 +555,7 @@
 			};
 			name = Debug;
 		};
-		EDA40FD5D73BBE0010CA0FB0 /* Release */ = {
+		EDA40FD5D73BBE0010CA0FB0 /* Release configuration for PBXNativeTarget "Songly" */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 214B0142C0915AAE504A8A69 /* Debug.xcconfig */;
 			buildSettings = {
@@ -575,6 +565,8 @@
 				DEEPSEEK_API_KEY = "$(DEEPSEEK_API_KEY)";
 				DEVELOPMENT_TEAM = 4L3563XCBN;
 				INFOPLIST_FILE = Songly/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "乐遇";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -582,11 +574,15 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.Songly;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
-		F655E360AB8E951C5F9CE309 /* Release */ = {
+		F655E360AB8E951C5F9CE309 /* Release configuration for PBXProject "Songly" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -643,7 +639,7 @@
 			};
 			name = Release;
 		};
-		F97A9C02E5C65C060156AE68 /* Release */ = {
+		F97A9C02E5C65C060156AE68 /* Release configuration for PBXNativeTarget "SonglyUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -667,37 +663,33 @@
 		18D9C39898DA61D8D94AC0F7 /* Build configuration list for PBXNativeTarget "SonglyUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				083E9E33F90B0AF693034D18 /* Debug */,
-				F97A9C02E5C65C060156AE68 /* Release */,
+				083E9E33F90B0AF693034D18 /* Debug configuration for PBXNativeTarget "SonglyUITests" */,
+				F97A9C02E5C65C060156AE68 /* Release configuration for PBXNativeTarget "SonglyUITests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 		4A2D2032C017070C404EB234 /* Build configuration list for PBXNativeTarget "Songly" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A7C29F8EF3BEBCAD806A3286 /* Debug */,
-				EDA40FD5D73BBE0010CA0FB0 /* Release */,
+				A7C29F8EF3BEBCAD806A3286 /* Debug configuration for PBXNativeTarget "Songly" */,
+				EDA40FD5D73BBE0010CA0FB0 /* Release configuration for PBXNativeTarget "Songly" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 		7DB60EEDFEA264D3D48153D8 /* Build configuration list for PBXProject "Songly" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				E10B4BD9F8386F467EAF416C /* Debug */,
-				F655E360AB8E951C5F9CE309 /* Release */,
+				E10B4BD9F8386F467EAF416C /* Debug configuration for PBXProject "Songly" */,
+				F655E360AB8E951C5F9CE309 /* Release configuration for PBXProject "Songly" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 		A54582B9011F1511E69CC2DD /* Build configuration list for PBXNativeTarget "SonglyTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C890E0B1795560C9D0B0F91C /* Debug */,
-				5C6A1207E3B23F7F5F000F71 /* Release */,
+				C890E0B1795560C9D0B0F91C /* Debug configuration for PBXNativeTarget "SonglyTests" */,
+				5C6A1207E3B23F7F5F000F71 /* Release configuration for PBXNativeTarget "SonglyTests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */

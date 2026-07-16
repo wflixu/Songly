@@ -29,6 +29,11 @@ targets:
         CURRENT_PROJECT_VERSION: 1
         # Custom build setting — read via AppEnvironment
         DEEPSEEK_API_KEY: $(DEEPSEEK_API_KEY)
+        # 仅支持 iPhone iOS，排除 Mac Catalyst / Mac (Designed for iPhone) / Vision Pro
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
     info:
       path: Songly/Info.plist
       properties:
@@ -39,6 +44,7 @@ targets:
           - fetch
         CFBundleDevelopmentRegion: zh_CN
         CFBundleDisplayName: 乐遇
+        LSApplicationCategoryType: "public.app-category.music"
         DEEPSEEK_API_KEY: $(DEEPSEEK_API_KEY)
 
   SonglyTests:
