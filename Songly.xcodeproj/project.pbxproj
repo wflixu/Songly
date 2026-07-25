@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		0A95CAC1C64EF95329C9977B /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08ADB09F56AF8A3EEF1491AD /* HomeViewModel.swift */; };
 		1212EAB8D7D7EEC2A029491C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 96C58E301600EEA39A231568 /* PrivacyInfo.xcprivacy */; };
-		24059B89A0B7F8CA1A5547C0 /* Debug.xcconfig.example in Resources */ = {isa = PBXBuildFile; fileRef = 6A104D8CF2C75D68D27B3574 /* Debug.xcconfig.example */; };
 		2B42B76293C91002039C022F /* MusicKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413603C3B9605AD9F42C9C48 /* MusicKitService.swift */; };
 		37BAE319343901825DAD1DA1 /* SonglyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28C6622E7DC7F2D1A48E2DBD /* SonglyUITests.swift */; };
 		3853066FF916B83B4263F872 /* QuickPickViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20887D01A79EBE55A4130055 /* QuickPickViewModel.swift */; };
@@ -79,7 +78,6 @@
 		5A607B8C47F286DDF37FC89B /* PlaylistService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistService.swift; sourceTree = "<group>"; };
 		618AA8EAA7057B298D7D3932 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6483D2D2704433FEBEF4A41F /* Songly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Songly.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		6A104D8CF2C75D68D27B3574 /* Debug.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text; path = Debug.xcconfig.example; sourceTree = "<group>"; };
 		72C0B305889488ED01A221F9 /* RecommendationResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationResultView.swift; sourceTree = "<group>"; };
 		73A3E71D16FF2A1E7C834E51 /* PromptBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptBuilder.swift; sourceTree = "<group>"; };
 		873D900B40B7270AC99F5C1A /* RecommendationRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationRecord.swift; sourceTree = "<group>"; };
@@ -90,7 +88,6 @@
 		A5683F6BC3E52346652CB591 /* SonglyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SonglyApp.swift; sourceTree = "<group>"; };
 		A6B732CCAECD8B3048A1F519 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		A75045BA27FEB10D9E16C645 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		AEAB70B46CC7211348C4BA0B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C8A42B1768A9C745068C07A2 /* SonglyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SonglyTests.swift; sourceTree = "<group>"; };
 		CB879AB742C18E085F944BB0 /* DateFormatter+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DateFormatter+Extensions.swift"; sourceTree = "<group>"; };
 		D1E969B1A8661BD77B616C22 /* SonglyUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SonglyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -120,7 +117,6 @@
 			isa = PBXGroup;
 			children = (
 				A75045BA27FEB10D9E16C645 /* Assets.xcassets */,
-				AEAB70B46CC7211348C4BA0B /* Info.plist */,
 				96C58E301600EEA39A231568 /* PrivacyInfo.xcprivacy */,
 				A5683F6BC3E52346652CB591 /* SonglyApp.swift */,
 				94FF1B1D71B11ACA78D86B3A /* App */,
@@ -232,7 +228,6 @@
 			isa = PBXGroup;
 			children = (
 				214B0142C0915AAE504A8A69 /* Debug.xcconfig */,
-				6A104D8CF2C75D68D27B3574 /* Debug.xcconfig.example */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -343,7 +338,6 @@
 			isa = PBXResourcesBuildPhase;
 			files = (
 				6B21DA3A1A653724C73D555B /* Assets.xcassets in Resources */,
-				24059B89A0B7F8CA1A5547C0 /* Debug.xcconfig.example in Resources */,
 				925ADC78D703778A9A8B8C72 /* Localizable.xcstrings in Resources */,
 				1212EAB8D7D7EEC2A029491C /* PrivacyInfo.xcprivacy in Resources */,
 			);
@@ -451,13 +445,23 @@
 			baseConfigurationReference = 214B0142C0915AAE504A8A69 /* Debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEEPSEEK_API_KEY = "$(DEEPSEEK_API_KEY)";
 				DEVELOPMENT_TEAM = 4L3563XCBN;
-				INFOPLIST_FILE = Songly/Info.plist;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_BGTaskSchedulerPermittedIdentifiers = cn.wflixu.Songly.dailyRecommendation;
+				INFOPLIST_KEY_CFBundleDevelopmentRegion = zh_CN;
 				INFOPLIST_KEY_CFBundleDisplayName = "乐遇";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "乐遇需要访问你的 Apple Music 收藏，以便 AI 为你生成个性化推荐歌单。";
+				INFOPLIST_KEY_UIBackgroundModes = fetch;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -469,6 +473,9 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -560,13 +567,23 @@
 			baseConfigurationReference = 214B0142C0915AAE504A8A69 /* Debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEEPSEEK_API_KEY = "$(DEEPSEEK_API_KEY)";
 				DEVELOPMENT_TEAM = 4L3563XCBN;
-				INFOPLIST_FILE = Songly/Info.plist;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_BGTaskSchedulerPermittedIdentifiers = cn.wflixu.Songly.dailyRecommendation;
+				INFOPLIST_KEY_CFBundleDevelopmentRegion = zh_CN;
 				INFOPLIST_KEY_CFBundleDisplayName = "乐遇";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "乐遇需要访问你的 Apple Music 收藏，以便 AI 为你生成个性化推荐歌单。";
+				INFOPLIST_KEY_UIBackgroundModes = fetch;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -578,6 +595,9 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;

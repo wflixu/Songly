@@ -32,9 +32,12 @@ struct SonglyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(homeVM: homeVM, engine: engine)
+            ZStack {
+                Color(.systemBackground).ignoresSafeArea()
+                ContentView(homeVM: homeVM, engine: engine)
+                    .modelContainer(modelContainer)
+            }
         }
-        .modelContainer(modelContainer)
     }
 }
 
@@ -45,32 +48,34 @@ struct ContentView: View {
     @State private var selectedTab = 0
 
     var body: some View {
-        NavigationStack {
-            TabView(selection: $selectedTab) {
+        TabView(selection: $selectedTab) {
+            NavigationStack {
                 HomeView()
                     .environment(homeVM)
                     .navigationTitle("乐遇")
                     .navigationBarTitleDisplayMode(.inline)
-                    .tabItem { Label("首页", systemImage: "music.note.house.fill") }
-                    .tag(0)
+            }
+            .tabItem { Label("首页", systemImage: "music.note.house.fill") }
+            .tag(0)
 
+            NavigationStack {
                 SettingsView()
                     .navigationTitle("设置")
                     .navigationBarTitleDisplayMode(.inline)
-                    .tabItem { Label("设置", systemImage: "gear") }
-                    .tag(1)
             }
-            .onAppear {
-                let bar = UITabBarAppearance()
-                bar.configureWithDefaultBackground()
-                UITabBar.appearance().standardAppearance = bar
-                UITabBar.appearance().scrollEdgeAppearance = bar
+            .tabItem { Label("设置", systemImage: "gear") }
+            .tag(1)
+        }
+        .onAppear {
+            let bar = UITabBarAppearance()
+            bar.configureWithDefaultBackground()
+            UITabBar.appearance().standardAppearance = bar
+            UITabBar.appearance().scrollEdgeAppearance = bar
 
-                let bg = BackgroundTaskService(engine: engine)
-                bg.register()
-                bg.schedule()
-                Task { _ = await NotificationService.shared.requestPermission() }
-            }
+            let bg = BackgroundTaskService(engine: engine)
+            bg.register()
+            bg.schedule()
+            Task { _ = await NotificationService.shared.requestPermission() }
         }
     }
 }
