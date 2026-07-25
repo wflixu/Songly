@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import Observation
+import SwiftData
 
 @MainActor
 @Observable
@@ -19,6 +20,7 @@ final class HomeViewModel {
 
     private let engine: RecommendationEngine
     private let networkMonitor: NetworkMonitor
+    private let modelContainer: ModelContainer
 
     var isLoading: Bool {
         switch state {
@@ -30,8 +32,9 @@ final class HomeViewModel {
     }
 
     var canTrigger: Bool {
+        // Only allow when idle — never after completion.
+        guard !isOffline else { return false }
         if case .idle = state { return true }
-        if case .completed = state { return true }
         return errorRetryable
     }
 
@@ -45,26 +48,44 @@ final class HomeViewModel {
     /// Expose engine for QuickPickViewModel injection.
     nonisolated var engineRef: RecommendationEngine { engine }
 
-    init(engine: RecommendationEngine, networkMonitor: NetworkMonitor) {
+    init(engine: RecommendationEngine, networkMonitor: NetworkMonitor, modelContainer: ModelContainer) {
         self.engine = engine
         self.networkMonitor = networkMonitor
+        self.modelContainer = modelContainer
 
         Task {
-            await checkToday()
+            await restoreTodayState()
         }
     }
 
-    func checkToday() async {
-        let has = await engine.hasTodayRecommendation()
-        if has {
-            todayRecord = loadTodayRecord()
-        }
+    /// If a recommendation was already completed today, restore the UI state.
+    private func restoreTodayState() async {
+        guard let record = loadTodayRecord() else { return }
+        todayRecord = record
+        totalRecommendations = (try? modelContainer.mainContext.fetchCount(
+            FetchDescriptor<RecommendationRecord>()
+        )) ?? 0
+        let name = record.playlistName ?? "今日推荐"
+        state = .completed(trackCount: record.songCount, playlistName: name)
     }
 
     func triggerDailyRecommendation() {
         guard canTrigger, !isOffline else { return }
-        state = .readingLibrary
+        startRecommendation()
+    }
 
+    func forceRegenerate() {
+        guard !isOffline else { return }
+        // Delete today's record so the new one replaces it
+        if let record = loadTodayRecord() {
+            modelContainer.mainContext.delete(record)
+            try? modelContainer.mainContext.save()
+        }
+        startRecommendation()
+    }
+
+    private func startRecommendation() {
+        state = .readingLibrary
         Task {
             await engine.runDailyRecommendation { [weak self] nextState in
                 Task { @MainActor in
@@ -79,7 +100,16 @@ final class HomeViewModel {
     }
 
     private func loadTodayRecord() -> RecommendationRecord? {
-        // Query from SwiftData — simplest approach
-        return nil
+        let context = modelContainer.mainContext
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+
+        let predicate = #Predicate<RecommendationRecord> { record in
+            record.date >= today && record.date < tomorrow
+        }
+        var descriptor = FetchDescriptor<RecommendationRecord>(predicate: predicate)
+        descriptor.fetchLimit = 1
+        return try? context.fetch(descriptor).first
     }
 }

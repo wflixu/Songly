@@ -32,10 +32,8 @@ struct HomeView: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 24)
                 }
-                .background(Color(.systemGroupedBackground))
             }
         }
-        .background(Color(.systemGroupedBackground))
         .task { checkAuth() }
     }
 
@@ -48,17 +46,20 @@ struct HomeView: View {
             endPoint: .bottomTrailing
         )
         .overlay(alignment: .leading) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("\(Date().chineseDateString) · \(Date().chineseWeekdayString)")
-                    .font(.title3)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("乐遇")
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
+                Text("\(Date().chineseDateString) · \(Date().chineseWeekdayString)")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.85))
                 Text("AI 驱动的个性化歌单")
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.white.opacity(0.6))
             }
-            .padding(20)
+            .padding(24)
         }
-        .frame(height: 100)
+        .frame(height: 140)
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 
@@ -82,16 +83,26 @@ struct HomeView: View {
                         }
                         .disabled(!vm.canTrigger)
                     }
-            case .completed:
+            case .completed(let count, let name):
                 stateCard(icon: "checkmark.circle.fill", color: .green,
-                    title: "歌单已就绪", desc: "已为你生成今日专属推荐") {
-                        Button {
-                            if let u = URL(string: "music://") { UIApplication.shared.open(u) }
-                        } label: {
-                            Label("在 Apple Music 中打开", systemImage: "play.circle.fill")
-                                .font(.headline).foregroundStyle(.white)
-                                .frame(maxWidth: .infinity).padding(.vertical, 14)
-                                .background(.green, in: RoundedRectangle(cornerRadius: 14))
+                    title: "歌单已就绪", desc: "「\(name)」\n共 \(count) 首歌曲") {
+                        VStack(spacing: 10) {
+                            Button {
+                                if let u = URL(string: "music://") { UIApplication.shared.open(u) }
+                            } label: {
+                                Label("在音乐 App 资料库中查看", systemImage: "play.circle.fill")
+                                    .font(.headline).foregroundStyle(.white)
+                                    .frame(maxWidth: .infinity).padding(.vertical, 14)
+                                    .background(.green, in: RoundedRectangle(cornerRadius: 14))
+                            }
+                            Button {
+                                vm.forceRegenerate()
+                            } label: {
+                                Label("重新生成", systemImage: "arrow.triangle.2.circlepath")
+                                    .font(.subheadline)
+                                    .frame(maxWidth: .infinity).padding(.vertical, 10)
+                            }
+                            .buttonStyle(.bordered)
                         }
                     }
             case .readingLibrary, .generating, .searchingCatalog, .persistingRecord, .creatingPlaylist:
@@ -224,6 +235,5 @@ private struct DeniedView: View {
             Spacer()
         }
         .padding()
-        .background(Color(.systemGroupedBackground))
     }
 }

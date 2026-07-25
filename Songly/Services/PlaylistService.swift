@@ -11,11 +11,11 @@ import MusicKit
 // MARK: - Protocol
 
 protocol PlaylistServiceProtocol: Sendable {
-    /// Create a new playlist in the user's Apple Music library.
+    /// Create a new playlist in the user's Apple Music library with songs.
     func createPlaylist(
         name: String,
         description: String,
-        trackIDs: [MusicItemID]
+        songs: [Song]
     ) async throws -> Playlist
 
     /// Find a playlist by name (for same-day dedup).
@@ -28,17 +28,19 @@ final class PlaylistService: PlaylistServiceProtocol {
     func createPlaylist(
         name: String,
         description: String,
-        trackIDs: [MusicItemID]
+        songs: [Song]
     ) async throws -> Playlist {
-        // Create playlist with metadata.
-        // Note: Adding tracks requires Song objects (MusicPlaylistAddable),
-        // not just MusicItemID. For MVP, tracks are described in the playlist
-        // description; full track population is a Phase 2 enhancement.
-        let trackList = trackIDs.isEmpty ? "" : "\n\n推荐曲目数: \(trackIDs.count) 首"
+        // Step 1: Create empty playlist
         let playlist = try await MusicLibrary.shared.createPlaylist(
             name: name,
-            description: description + trackList
+            description: description
         )
+
+        // Step 2: Add songs to playlist
+        for song in songs {
+            try await MusicLibrary.shared.add(song, to: playlist)
+        }
+
         return playlist
     }
 

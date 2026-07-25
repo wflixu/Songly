@@ -25,7 +25,8 @@ protocol MusicKitServiceProtocol: Sendable {
 
     /// Search Apple Music catalog for a track.
     /// Uses three-tier matching: exact → title-only → artist fuzzy.
-    func searchTrack(title: String, artist: String) async throws -> MusicItemID?
+    /// Returns the Song object for direct playlist addition.
+    func searchTrack(title: String, artist: String) async throws -> Song?
 }
 
 // MARK: - Implementation
@@ -67,15 +68,15 @@ final class MusicKitService: MusicKitServiceProtocol {
         return songs
     }
 
-    func searchTrack(title: String, artist: String) async throws -> MusicItemID? {
+    func searchTrack(title: String, artist: String) async throws -> Song? {
         // Tier 1: Exact match — "{title} {artist}"
-        if let id = try await searchCatalog(query: "\(title) \(artist)") {
-            return id
+        if let song = try await searchCatalog(query: "\(title) \(artist)") {
+            return song
         }
 
         // Tier 2: Title-only search
-        if let id = try await searchCatalog(query: title) {
-            return id
+        if let song = try await searchCatalog(query: title) {
+            return song
         }
 
         // Tier 3: Title search with fuzzy artist matching
@@ -84,7 +85,7 @@ final class MusicKitService: MusicKitServiceProtocol {
         let response = try await request.response()
         for song in response.songs {
             if artistDistance(song.artistName, artist) < 0.3 {
-                return song.id
+                return song
             }
         }
 
@@ -93,11 +94,11 @@ final class MusicKitService: MusicKitServiceProtocol {
 
     // MARK: - Private Helpers
 
-    private func searchCatalog(query: String) async throws -> MusicItemID? {
+    private func searchCatalog(query: String) async throws -> Song? {
         var request = MusicCatalogSearchRequest(term: query, types: [Song.self])
         request.limit = 1
         let response = try await request.response()
-        return response.songs.first?.id
+        return response.songs.first
     }
 
     /// Simple Levenshtein-like distance normalized to [0, 1].

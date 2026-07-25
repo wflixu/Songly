@@ -82,16 +82,11 @@ final class LLMService: LLMServiceProtocol {
     private func buildRequestBody(prompt: String) throws -> Data {
         let requestBody: [String: Any] = [
             "model": AppConfig.deepseekModel,
-            "messages": [
-                [
-                    "role": "system",
-                    "content": "你是一个专业音乐推荐专家。只输出歌曲列表，每行格式「歌名 - 艺人名」，不输出任何额外说明。"
-                ],
-                ["role": "user", "content": prompt]
-            ],
-            "temperature": 0.9,
             "max_tokens": 1000,
-            "stream": false
+            "system": "你是一个专业音乐推荐专家。只输出歌曲列表，每行格式「歌名 - 艺人名」，不输出任何额外说明。",
+            "messages": [
+                ["role": "user", "content": prompt]
+            ]
         ]
 
         return try JSONSerialization.data(withJSONObject: requestBody)
@@ -102,7 +97,8 @@ final class LLMService: LLMServiceProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.httpBody = body
 
         // Retry with exponential backoff
@@ -147,10 +143,9 @@ final class LLMService: LLMServiceProtocol {
 
     private func parseResponse(data: Data) throws -> [TrackItem] {
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let choices = json["choices"] as? [[String: Any]],
-              let firstChoice = choices.first,
-              let message = firstChoice["message"] as? [String: Any],
-              let content = message["content"] as? String
+              let contentArray = json["content"] as? [[String: Any]],
+              let firstBlock = contentArray.first,
+              let content = firstBlock["text"] as? String
         else {
             throw LLMServiceError.parseError("Unexpected JSON structure")
         }

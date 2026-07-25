@@ -27,7 +27,7 @@ struct SonglyApp: App {
             modelContainer: container
         )
         self.engine = eng
-        self.homeVM = HomeViewModel(engine: eng, networkMonitor: NetworkMonitor())
+        self.homeVM = HomeViewModel(engine: eng, networkMonitor: NetworkMonitor(), modelContainer: container)
     }
 
     var body: some Scene {
@@ -52,7 +52,6 @@ struct ContentView: View {
             NavigationStack {
                 HomeView()
                     .environment(homeVM)
-                    .navigationTitle("乐遇")
                     .navigationBarTitleDisplayMode(.inline)
             }
             .tabItem { Label("首页", systemImage: "music.note.house.fill") }

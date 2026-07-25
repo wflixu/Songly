@@ -10,8 +10,8 @@ import Foundation
 enum AppConfig {
     // MARK: - DeepSeek API
 
-    static let deepseekBaseURL = "https://api.deepseek.com/v1/chat/completions"
-    static let deepseekModel = "deepseek-chat"
+    static let deepseekBaseURL = "https://api.deepseek.com/anthropic/messages"
+    static let deepseekModel = "deepseek-v4-flash"
     static let requestTimeout: TimeInterval = 10
     static let maxRetries = 3
     static let retryDelays: [TimeInterval] = [1, 2, 4]

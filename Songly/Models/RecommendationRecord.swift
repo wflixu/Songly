@@ -25,6 +25,8 @@ final class RecommendationRecord {
     var source: String
     /// "想听"的风格标签（仅 quick_pick）。
     var quickPickStyle: String?
+    /// 创建的播放列表名称。
+    var playlistName: String?
 
     // MARK: - Computed: TrackInfo
 
@@ -59,7 +61,8 @@ final class RecommendationRecord {
         songCount: Int,
         tracks: [TrackInfo],
         source: String,
-        quickPickStyle: String? = nil
+        quickPickStyle: String? = nil,
+        playlistName: String? = nil
     ) {
         self.date = date
         self.strategy = strategy
@@ -71,5 +74,6 @@ final class RecommendationRecord {
         self.createdAt = Date()
         self.source = source
         self.quickPickStyle = quickPickStyle
+        self.playlistName = playlistName
     }
 }

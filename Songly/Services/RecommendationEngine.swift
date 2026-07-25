@@ -188,7 +188,7 @@ actor RecommendationEngine {
 
         // Step 5: Concurrent catalog search
         await reportState(.searchingCatalog(found: 0, total: recommendations.count))
-        let matchedTracks = await searchCatalog(recommendations, reportState: reportState)
+        let (matchedTracks, matchedSongs) = await searchCatalog(recommendations, reportState: reportState)
 
         let matchRate = Double(matchedTracks.count) / Double(recommendations.count)
         guard !matchedTracks.isEmpty else {
@@ -207,21 +207,6 @@ actor RecommendationEngine {
         await reportState(.persistingRecord)
         let dateString = Date().chineseDateString
 
-        let saveSuccess = await saveRecommendation(
-            date: Date(),
-            strategy: strategy.rawValue,
-            songCount: matchedTracks.count,
-            tracks: matchedTracks,
-            source: source,
-            quickPickStyle: quickPickStyle?.rawValue
-        )
-        guard saveSuccess else {
-            await reportState(.error(message: "数据保存失败，请稍后重试", retryable: true))
-            return
-        }
-
-        // Step 7: Create playlist
-        await reportState(.creatingPlaylist)
         let playlistName: String
         let playlistDesc: String
         if let style = quickPickStyle {
@@ -232,11 +217,28 @@ actor RecommendationEngine {
             playlistDesc = "基于你的收藏，AI 为你生成的今日个性化歌单"
         }
 
+        let saveSuccess = await saveRecommendation(
+            date: Date(),
+            strategy: strategy.rawValue,
+            songCount: matchedTracks.count,
+            tracks: matchedTracks,
+            source: source,
+            quickPickStyle: quickPickStyle?.rawValue,
+            playlistName: playlistName
+        )
+        guard saveSuccess else {
+            await reportState(.error(message: "数据保存失败，请稍后重试", retryable: true))
+            return
+        }
+
+        // Step 7: Create playlist
+        await reportState(.creatingPlaylist)
+        let playlist: Playlist
         do {
-            _ = try await playlistService.createPlaylist(
+            playlist = try await playlistService.createPlaylist(
                 name: playlistName,
                 description: playlistDesc,
-                trackIDs: []
+                songs: matchedSongs
             )
         } catch {
             // Rollback: delete persisted record
@@ -246,7 +248,7 @@ actor RecommendationEngine {
         }
 
         // Step 8: Done
-        await reportState(.completed(trackCount: matchedTracks.count))
+        await reportState(.completed(trackCount: matchedTracks.count, playlistName: playlist.name))
 
         // Step 9: Notify
         await NotificationService.shared.sendRecommendationReady(count: matchedTracks.count)
@@ -254,33 +256,39 @@ actor RecommendationEngine {
 
     // MARK: - Catalog Search (TaskGroup)
 
+    private struct CatalogMatch {
+        let info: TrackInfo
+        let song: Song
+    }
+
     private func searchCatalog(
         _ tracks: [TrackItem],
         reportState: @escaping @Sendable @MainActor (RecommendationState) -> Void
-    ) async -> [TrackInfo] {
-        var matched: [TrackInfo] = []
+    ) async -> (infos: [TrackInfo], songs: [Song]) {
+        var infos: [TrackInfo] = []
+        var songs: [Song] = []
         let total = tracks.count
 
-        await withTaskGroup(of: TrackInfo?.self) { group in
+        await withTaskGroup(of: CatalogMatch?.self) { group in
             var running = 0
 
             for track in tracks {
                 if running >= AppConfig.searchConcurrency {
-                    if let result = await group.next(), let info = result {
-                        matched.append(info)
-                        await reportState(.searchingCatalog(found: matched.count, total: total))
+                    if let result = await group.next(), let match = result {
+                        infos.append(match.info)
+                        songs.append(match.song)
+                        await reportState(.searchingCatalog(found: infos.count, total: total))
                     }
                 }
 
                 group.addTask { [musicKitService] in
-                    if let id = try? await musicKitService.searchTrack(
+                    if let song = try? await musicKitService.searchTrack(
                         title: track.title,
                         artist: track.artist
                     ) {
-                        return TrackInfo(
-                            id: id.rawValue,
-                            name: track.title,
-                            artist: track.artist
+                        return CatalogMatch(
+                            info: TrackInfo(id: song.id.rawValue, name: track.title, artist: track.artist),
+                            song: song
                         )
                     }
                     return nil
@@ -289,14 +297,15 @@ actor RecommendationEngine {
             }
 
             for await result in group {
-                if let info = result {
-                    matched.append(info)
-                    await reportState(.searchingCatalog(found: matched.count, total: total))
+                if let match = result {
+                    infos.append(match.info)
+                    songs.append(match.song)
+                    await reportState(.searchingCatalog(found: infos.count, total: total))
                 }
             }
         }
 
-        return matched
+        return (infos, songs)
     }
 
     // MARK: - SwiftData Helpers (MainActor-isolated, Sendable-only params)
@@ -340,7 +349,8 @@ actor RecommendationEngine {
         songCount: Int,
         tracks: [TrackInfo],
         source: String,
-        quickPickStyle: String?
+        quickPickStyle: String?,
+        playlistName: String?
     ) -> Bool {
         let context = modelContainer.mainContext
         let record = RecommendationRecord(
@@ -349,7 +359,8 @@ actor RecommendationEngine {
             songCount: songCount,
             tracks: tracks,
             source: source,
-            quickPickStyle: quickPickStyle
+            quickPickStyle: quickPickStyle,
+            playlistName: playlistName
         )
         context.insert(record)
         do {

@@ -99,6 +99,6 @@ enum RecommendationState: Equatable {
     case searchingCatalog(found: Int, total: Int)
     case persistingRecord
     case creatingPlaylist
-    case completed(trackCount: Int)
+    case completed(trackCount: Int, playlistName: String)
     case error(message: String, retryable: Bool)
 }
