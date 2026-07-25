@@ -38,7 +38,7 @@ Apple Music 曲库全、无广告、体验好，但 **个性化推荐太弱了**
 | 数据 | SwiftData |
 | 音乐 | MusicKit Swift Framework |
 | AI 引擎 | DeepSeek API |
-| 项目构建 | XcodeGen |
+| 项目构建 | Xcode 直接管理 |
 
 ---
 
@@ -47,7 +47,6 @@ Apple Music 曲库全、无广告、体验好，但 **个性化推荐太弱了**
 ### 环境要求
 
 - macOS 26+ with Xcode 26+
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
 - Apple Music 订阅
 - DeepSeek API Key
 
@@ -56,9 +55,6 @@ Apple Music 曲库全、无广告、体验好，但 **个性化推荐太弱了**
 ```bash
 git clone <repo-url>
 cd Songly
-
-# 生成 Xcode 项目
-xcodegen generate --spec project.yml
 
 # 在 Xcode 中打开
 open Songly.xcodeproj
@@ -86,8 +82,7 @@ Songly/
 │   └── Assets.xcassets/     # 资源
 ├── SonglyTests/             # 单元测试 (Swift Testing)
 ├── SonglyUITests/           # UI 测试 (XCTest)
-├── Songly.xcodeproj/        # Xcode 项目（XcodeGen 生成）
-├── project.yml              # XcodeGen 配置
+├── Songly.xcodeproj/        # Xcode 项目
 └── specs/                   # 产品文档
     ├── idea.md              # 原始想法
     └── prd.md               # 产品需求文档
@@ -97,7 +92,7 @@ Songly/
 
 ## 路线图
 
-- [x] 项目初始化 + XcodeGen 配置
+- [x] 项目初始化
 - [ ] Phase 1: MVP 开发 — MusicKit 集成 + LLM 推荐链路
 - [ ] Phase 1.5: 自我验证 2 周 + 小范围内测
 - [ ] Phase 2: 策略轮换、反馈闭环、商业化（PMF 验证通过后）

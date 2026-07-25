@@ -35,17 +35,17 @@ extension DateFormatter {
 
 extension Date {
     /// "7月13日" format.
-    var chineseDateString: String {
+    nonisolated var chineseDateString: String {
         DateFormatter.chineseDate.string(from: self)
     }
 
     /// "星期一" format.
-    var chineseWeekdayString: String {
+    nonisolated var chineseWeekdayString: String {
         DateFormatter.chineseWeekday.string(from: self)
     }
 
     /// "7月13日" format for playlist names.
-    var playlistDateString: String {
+    nonisolated var playlistDateString: String {
         DateFormatter.playlistDate.string(from: self)
     }
 }

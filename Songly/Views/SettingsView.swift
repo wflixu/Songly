@@ -53,7 +53,6 @@ struct SettingsView: View {
                 Text("关于")
             }
         }
-        .background(Color(.systemGroupedBackground))
         .scrollContentBackground(.hidden)
         .task {
             authOk = MusicAuthorization.currentStatus == .authorized

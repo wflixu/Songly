@@ -40,7 +40,7 @@ Week 1-2               Week 3               Week 4-5
 
 | # | 任务 | 产出 | 状态 |
 |---|------|------|------|
-| 1.1 | XcodeGen 项目配置 (`project.yml`) | 可生成 .xcodeproj | ✅ Done |
+| 1.1 | Xcode 项目配置 | 可编译运行 | ✅ Done |
 | 1.2 | SwiftData ModelContainer 注入 | SonglyApp 入口就绪 | ✅ Done |
 | 1.3 | 基础文件结构搭建 | 按架构文档创建目录 | ⬜ Todo |
 | 1.4 | API Key 通过 `INFOPLIST_KEY_` 前缀注入 .xcconfig | DeepSeek API Key 配置 | ⬜ Todo |
@@ -344,7 +344,7 @@ M1 (基础设施) ──→ M2 (MusicKit) ──→ M4 (编排引擎) ──→ 
 
 每天开始前：
 - [ ] 拉取最新代码
-- [ ] `xcodegen generate` 重新生成项目
+- [ ] 确认项目可编译运行
 - [ ] 确认项目可编译运行
 
 每次提交前：

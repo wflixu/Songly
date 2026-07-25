@@ -65,7 +65,7 @@
 | ADR-2 | **MVVM + `@Observable` (iOS 17+)** | SwiftUI 原生 `@Observable` 宏（非旧版 `@ObservableObject`），`@State` 管所有权，`@Environment` 管注入，`@Bindable` 管双向绑定 | MVC, TCA, 旧版 `@Published`/`ObservableObject` |
 | ADR-3 | **SwiftData 持久化** | Apple 官方推荐，原生 Swift 宏支持，与 SwiftUI 深度集成 | Core Data, Realm, UserDefaults |
 | ADR-4 | **DeepSeek API 直连** | 国内可用、延迟低、成本极低（¥0.001/1K tokens） | 通义千问、月之暗面 |
-| ADR-5 | **XcodeGen 管理项目** | 避免 pbxproj 冲突，声明式配置，CI 友好 | 手动管理 pbxproj, Tuist |
+| ADR-5 | **直接管理 Xcode 项目** | 简单直接，单人项目无需额外工具，避免 XcodeGen 配置同步问题 | XcodeGen, Tuist |
 | ADR-6 | **API Key 通过 .xcconfig 注入** | 防止 git 误提交（开发卫生措施，非安全措施——Key 仍可被 IPA 二进制提取，MVP 接受此风险） | 环境变量, Keychain 读取 |
 | ADR-7 | **纯 `actor` 编排引擎** | Swift 6 并发安全，天然序列化管线执行，防止并发触发 | `@Observable` 引擎（职责不清）, `OSAllocatedUnfairLock` |
 

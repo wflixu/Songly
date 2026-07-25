@@ -166,7 +166,7 @@ Songly 读取用户 Apple Music 收藏 → LLM 分析口味 → 在 Apple Music 
 | 本地存储 | SwiftData |
 | 音乐数据 | MusicKit Swift Framework |
 | AI 引擎 | DeepSeek API（主）/ 通义千问 API（备） |
-| 项目生成 | XcodeGen (project.yml) |
+| 项目生成 | Xcode 直接管理 |
 | 架构模式 | MVVM |
 
 ### 4.2 核心数据流

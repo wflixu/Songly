@@ -15,7 +15,7 @@
 | 数据 | SwiftData |
 | 音乐 | MusicKit |
 | AI | DeepSeek API |
-| 项目生成 | XcodeGen (`project.yml`) |
+| 开发 | Xcode project (直接管理) |
 | 测试 | Swift Testing (单元), XCTest (UI) |
 | 最低系统 | iOS 26.5 |
 
@@ -30,8 +30,7 @@ Songly/
 │   └── Assets.xcassets/     # 资源
 ├── SonglyTests/             # 单元测试 (Swift Testing)
 ├── SonglyUITests/           # UI 测试 (XCTest)
-├── Songly.xcodeproj/        # Xcode 项目（XcodeGen 生成）
-├── project.yml              # XcodeGen 配置
+├── Songly.xcodeproj/        # Xcode 项目
 └── specs/                   # 产品文档
     ├── idea.md              # 原始想法
     └── prd.md               # 产品需求文档
@@ -40,9 +39,6 @@ Songly/
 ## 构建命令
 
 ```bash
-# XcodeGen 重新生成项目
-xcodegen generate --spec project.yml
-
 # 命令行构建
 xcodebuild -project Songly.xcodeproj -scheme Songly -destination 'platform=iOS Simulator,name=iPhone 17' build
 
@@ -55,7 +51,6 @@ xcodebuild -project Songly.xcodeproj -scheme Songly test -destination 'platform=
 - 使用 SwiftUI 原生组件，不引入第三方 UI 框架
 - 数据持久化使用 SwiftData (`@Model`, `@Query`, `ModelContainer`)
 - 异步操作使用 `async/await`
-- 不直接修改 `project.pbxproj`，通过 `project.yml` + XcodeGen 管理
 - API Key 等敏感信息不硬编码，使用 `.xcconfig` 或环境变量
 
 ## MusicKit 要点
@@ -68,7 +63,7 @@ xcodebuild -project Songly.xcodeproj -scheme Songly test -destination 'platform=
 ## 重要约定
 
 - **MVP 阶段不做商业化**，只验证推荐质量
-- **不直接编辑 .pbxproj**，项目变更后跑 `xcodegen generate`
+- **直接管理 .pbxproj**，通过 Xcode 添加/删除文件
 - **iPhone + iPad 双平台**（TARGETED_DEVICE_FAMILY = 1,2）
 - Bundle ID 前缀: `cn.wflixu`
 - Team ID: `4L3563XCBN`
