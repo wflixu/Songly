@@ -55,33 +55,42 @@ enum RecommendationStrategy: String, CaseIterable, Sendable {
 // MARK: - QuickPick Style
 
 enum QuickPickStyle: String, CaseIterable, Sendable {
+    case piano = "钢琴"
+    case classical = "古典"
     case rock = "摇滚"
-    case instrumental = "纯音乐"
     case jazz = "爵士"
+    case english = "英文"
+    case instrumental = "纯音乐"
     case surprise = "来点不一样的"
     case sleep = "睡前放松"
 
     var emoji: String {
         switch self {
+        case .piano: return "🎹"
+        case .classical: return "🎻"
         case .rock: return "🎸"
-        case .instrumental: return "🎹"
         case .jazz: return "🎷"
+        case .english: return "🌍"
+        case .instrumental: return "🎼"
         case .surprise: return "🔀"
         case .sleep: return "🌙"
         }
     }
 
-    /// MVP 阶段展示的风格（精简为 3 种）。
-    static var mvpStyles: [QuickPickStyle] {
-        [.rock, .jazz, .surprise]
+    /// 全部风格（用于风格选择器）。
+    static var allStyles: [QuickPickStyle] {
+        QuickPickStyle.allCases
     }
 
     /// 风格对应的 prompt 提示词。
     var promptHint: String {
         switch self {
+        case .piano: return "推荐钢琴曲/钢琴独奏/钢琴伴奏的优美曲目"
+        case .classical: return "推荐古典音乐/交响乐/室内乐经典作品"
         case .rock: return "推荐摇滚/另类摇滚/独立摇滚风格的好歌，注重吉他编排和能量感"
-        case .instrumental: return "推荐纯音乐/器乐演奏，适合专注或放松时聆听"
         case .jazz: return "推荐爵士/融合爵士/冷爵士风格，注重旋律和即兴"
+        case .english: return "推荐热门/经典英文歌曲，欧美流行"
+        case .instrumental: return "推荐纯音乐/器乐演奏，适合专注或放松时聆听"
         case .surprise: return "来点不一样的——跨风格随机推荐，跳出用户的舒适区"
         case .sleep: return "推荐舒缓放松的音乐，适合睡前聆听"
         }
@@ -101,4 +110,16 @@ enum RecommendationState: Equatable {
     case creatingPlaylist
     case completed(trackCount: Int, playlistName: String)
     case error(message: String, retryable: Bool)
+
+    /// Identifier for animation keying during stage transitions.
+    var stageIdentifier: String {
+        switch self {
+        case .readingLibrary: return "reading"
+        case .generating: return "generating"
+        case .searchingCatalog: return "searching"
+        case .persistingRecord: return "persisting"
+        case .creatingPlaylist: return "creating"
+        default: return "idle"
+        }
+    }
 }

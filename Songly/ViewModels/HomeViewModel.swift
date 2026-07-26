@@ -17,6 +17,10 @@ final class HomeViewModel {
     private(set) var todayRecord: RecommendationRecord?
     private(set) var totalRecommendations: Int = 0
     private(set) var isOffline: Bool = false
+    private(set) var recentRecords: [RecommendationRecord] = []
+
+    /// Controls the style picker sheet presentation.
+    var showStylePicker = false
 
     private let engine: RecommendationEngine
     private let networkMonitor: NetworkMonitor
@@ -32,20 +36,11 @@ final class HomeViewModel {
     }
 
     var canTrigger: Bool {
-        // Only allow when idle — never after completion.
         guard !isOffline else { return false }
-        if case .idle = state { return true }
-        return errorRetryable
+        return !isLoading
     }
 
-    var errorRetryable: Bool {
-        if case .error(_, let retryable) = state {
-            return retryable
-        }
-        return false
-    }
-
-    /// Expose engine for QuickPickViewModel injection.
+    /// Expose engine for external access.
     nonisolated var engineRef: RecommendationEngine { engine }
 
     init(engine: RecommendationEngine, networkMonitor: NetworkMonitor, modelContainer: ModelContainer) {
@@ -55,6 +50,7 @@ final class HomeViewModel {
 
         Task {
             await restoreTodayState()
+            await loadRecentRecords()
         }
     }
 
@@ -69,30 +65,71 @@ final class HomeViewModel {
         state = .completed(trackCount: record.songCount, playlistName: name)
     }
 
+    /// Load recent records excluding today's for the preview section.
+    func loadRecentRecords() async {
+        let context = modelContainer.mainContext
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        var descriptor = FetchDescriptor<RecommendationRecord>(
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        descriptor.fetchLimit = 10
+
+        if let all = try? context.fetch(descriptor) {
+            recentRecords = all.filter { !calendar.isDate($0.date, inSameDayAs: today) }.prefix(3).map { $0 }
+        }
+        totalRecommendations = (try? context.fetchCount(FetchDescriptor<RecommendationRecord>())) ?? 0
+    }
+
+    // MARK: - Daily (Direct) Recommendation
+
     func triggerDailyRecommendation() {
-        guard canTrigger, !isOffline else { return }
-        startRecommendation()
+        guard canTrigger else { return }
+        startRecommendation(source: "daily", quickPickStyle: nil)
+    }
+
+    // MARK: - Styled Recommendation
+
+    func triggerStyledRecommendation(style: QuickPickStyle) {
+        guard canTrigger else { return }
+        startRecommendation(source: "quick_pick", quickPickStyle: style)
     }
 
     func forceRegenerate() {
         guard !isOffline else { return }
-        // Delete today's record so the new one replaces it
         if let record = loadTodayRecord() {
             modelContainer.mainContext.delete(record)
             try? modelContainer.mainContext.save()
         }
-        startRecommendation()
+        startRecommendation(source: "daily", quickPickStyle: nil)
     }
 
-    private func startRecommendation() {
+    // MARK: - Private
+
+    private func startRecommendation(source: String, quickPickStyle: QuickPickStyle?) {
         state = .readingLibrary
         Task {
-            await engine.runDailyRecommendation { [weak self] nextState in
-                Task { @MainActor in
-                    self?.state = nextState
-                    if case .completed = nextState {
-                        self?.todayRecord = self?.loadTodayRecord()
-                        self?.totalRecommendations += 1
+            if let style = quickPickStyle {
+                await engine.runQuickPickRecommendation(style: style) { [weak self] nextState in
+                    Task { @MainActor in
+                        self?.state = nextState
+                        if case .completed = nextState {
+                            self?.todayRecord = self?.loadTodayRecord()
+                            self?.totalRecommendations += 1
+                            await self?.loadRecentRecords()
+                        }
+                    }
+                }
+            } else {
+                await engine.runDailyRecommendation { [weak self] nextState in
+                    Task { @MainActor in
+                        self?.state = nextState
+                        if case .completed = nextState {
+                            self?.todayRecord = self?.loadTodayRecord()
+                            self?.totalRecommendations += 1
+                            await self?.loadRecentRecords()
+                        }
                     }
                 }
             }

@@ -32,7 +32,7 @@ enum EngineError: LocalizedError {
 
 actor RecommendationEngine {
     private let musicKitService: MusicKitServiceProtocol
-    private let llmService: LLMServiceProtocol
+    private let llmService: LLMService
     private let playlistService: PlaylistServiceProtocol
     private let modelContainer: ModelContainer
 
@@ -41,7 +41,7 @@ actor RecommendationEngine {
 
     init(
         musicKitService: MusicKitServiceProtocol,
-        llmService: LLMServiceProtocol,
+        llmService: LLMService,
         playlistService: PlaylistServiceProtocol,
         modelContainer: ModelContainer
     ) {

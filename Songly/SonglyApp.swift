@@ -18,11 +18,9 @@ struct SonglyApp: App {
         let container = try! ModelContainer(for: schema, configurations: [config])
         self.modelContainer = container
 
-        let llm: LLMServiceProtocol = AppEnvironment.isAPIKeyConfigured
-            ? LLMService() : MockLLMService()
         let eng = RecommendationEngine(
             musicKitService: MusicKitService(),
-            llmService: llm,
+            llmService: LLMService(),
             playlistService: PlaylistService(),
             modelContainer: container
         )

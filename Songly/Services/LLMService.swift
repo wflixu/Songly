@@ -3,7 +3,6 @@
 //  Songly
 //
 //  DeepSeek API client for generating music recommendations.
-//  Includes MockLLMService for development and testing.
 //
 
 import Foundation
@@ -33,19 +32,9 @@ enum LLMServiceError: LocalizedError {
     }
 }
 
-// MARK: - Protocol
-
-protocol LLMServiceProtocol: Sendable {
-    /// Generate music recommendations from a prompt.
-    func recommend(prompt: String) async throws -> [TrackItem]
-
-    /// Quick health check (minimal API call).
-    func healthCheck() async -> Bool
-}
-
 // MARK: - DeepSeek API Client
 
-final class LLMService: LLMServiceProtocol {
+final class LLMService {
     private let session: URLSession
     private let apiKey: String
 
@@ -209,58 +198,3 @@ final class LLMService: LLMServiceProtocol {
     }
 }
 
-// MARK: - Mock (Development & Testing)
-
-final class MockLLMService: LLMServiceProtocol {
-    let shouldFail: Bool
-    let mockDelay: TimeInterval
-
-    init(shouldFail: Bool = false, mockDelay: TimeInterval = 1.0) {
-        self.shouldFail = shouldFail
-        self.mockDelay = mockDelay
-    }
-
-    private let mockTracks: [TrackItem] = [
-        TrackItem(title: "Bohemian Rhapsody", artist: "Queen"),
-        TrackItem(title: "Hotel California", artist: "Eagles"),
-        TrackItem(title: "Imagine", artist: "John Lennon"),
-        TrackItem(title: "Stairway to Heaven", artist: "Led Zeppelin"),
-        TrackItem(title: "Yesterday", artist: "The Beatles"),
-        TrackItem(title: "Smells Like Teen Spirit", artist: "Nirvana"),
-        TrackItem(title: "Billie Jean", artist: "Michael Jackson"),
-        TrackItem(title: "Purple Rain", artist: "Prince"),
-        TrackItem(title: "Like a Rolling Stone", artist: "Bob Dylan"),
-        TrackItem(title: "What's Going On", artist: "Marvin Gaye"),
-        TrackItem(title: "Superstition", artist: "Stevie Wonder"),
-        TrackItem(title: "Dreams", artist: "Fleetwood Mac"),
-        TrackItem(title: "Heroes", artist: "David Bowie"),
-        TrackItem(title: "Lose Yourself", artist: "Eminem"),
-        TrackItem(title: "Redemption Song", artist: "Bob Marley"),
-        TrackItem(title: "Creep", artist: "Radiohead"),
-        TrackItem(title: "Come As You Are", artist: "Nirvana"),
-        TrackItem(title: "Take On Me", artist: "a-ha"),
-        TrackItem(title: "Sweet Child O' Mine", artist: "Guns N' Roses"),
-        TrackItem(title: "Wonderwall", artist: "Oasis"),
-        TrackItem(title: "Yellow", artist: "Coldplay"),
-        TrackItem(title: "Clocks", artist: "Coldplay"),
-        TrackItem(title: "Fix You", artist: "Coldplay"),
-        TrackItem(title: "Viva la Vida", artist: "Coldplay"),
-        TrackItem(title: "Shape of You", artist: "Ed Sheeran"),
-    ]
-
-    func recommend(prompt: String) async throws -> [TrackItem] {
-        try await Task.sleep(nanoseconds: UInt64(mockDelay * 1_000_000_000))
-
-        if shouldFail {
-            throw LLMServiceError.timeout
-        }
-
-        // Deterministic pseudo-random: use prompt hash to vary results
-        let results = mockTracks.shuffled()
-        return Array(results.prefix(AppConfig.targetTrackCount))
-    }
-
-    func healthCheck() async -> Bool {
-        return !shouldFail
-    }
-}
