@@ -177,7 +177,14 @@ actor RecommendationEngine {
         do {
             recommendations = try await llmService.recommend(prompt: prompt)
         } catch {
-            await reportState(.error(message: "推荐生成失败，请稍后重试", retryable: true))
+            let isKeyError = (error as? LLMServiceError).map {
+                if case .apiKeyNotConfigured = $0 { return true }
+                return false
+            } ?? false
+            await reportState(.error(
+                message: error.localizedDescription,
+                retryable: !isKeyError
+            ))
             return
         }
 
