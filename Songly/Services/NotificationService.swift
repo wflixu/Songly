@@ -8,6 +8,12 @@
 import Foundation
 import UserNotifications
 
+extension Notification.Name {
+    /// Posted when a background daily recommendation completes, so the
+    /// foreground UI (HomeViewModel) can reload today's record.
+    static let recommendationDidComplete = Notification.Name("cn.wflixu.Songly.recommendationDidComplete")
+}
+
 @MainActor
 final class NotificationService: Sendable {
     static let shared = NotificationService()

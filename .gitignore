@@ -10,6 +10,7 @@ Songly.xcodeproj/
 # Config (API Keys)
 *.xcconfig
 !*.xcconfig.example
+Songly/Config/api_key.env
 
 # macOS
 .DS_Store

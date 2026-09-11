@@ -25,6 +25,7 @@ final class HomeViewModel {
     private let engine: RecommendationEngine
     private let networkMonitor: NetworkMonitor
     private let modelContainer: ModelContainer
+    private var completionObserver: NSObjectProtocol?
 
     var isLoading: Bool {
         switch state {
@@ -48,10 +49,32 @@ final class HomeViewModel {
         self.networkMonitor = networkMonitor
         self.modelContainer = modelContainer
 
+        // Refresh the foreground UI if a background recommendation completes
+        // while the app is open (e.g. left open overnight).
+        completionObserver = NotificationCenter.default.addObserver(
+            forName: .recommendationDidComplete,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in await self?.reloadAfterBackgroundCompletion() }
+        }
+
         Task {
             await restoreTodayState()
             await loadRecentRecords()
         }
+    }
+
+    /// Reload today's record + recent list after a background completion.
+    private func reloadAfterBackgroundCompletion() async {
+        todayRecord = loadTodayRecord()
+        totalRecommendations = (try? modelContainer.mainContext.fetchCount(
+            FetchDescriptor<RecommendationRecord>()
+        )) ?? 0
+        if let record = todayRecord {
+            state = .completed(trackCount: record.songCount, playlistName: record.playlistName ?? "今日推荐")
+        }
+        await loadRecentRecords()
     }
 
     /// If a recommendation was already completed today, restore the UI state.
@@ -108,31 +131,31 @@ final class HomeViewModel {
     // MARK: - Private
 
     private func startRecommendation(source: String, quickPickStyle: QuickPickStyle?) {
-        state = .readingLibrary
         Task {
+            let started: Bool
             if let style = quickPickStyle {
-                await engine.runQuickPickRecommendation(style: style) { [weak self] nextState in
-                    Task { @MainActor in
-                        self?.state = nextState
-                        if case .completed = nextState {
-                            self?.todayRecord = self?.loadTodayRecord()
-                            self?.totalRecommendations += 1
-                            await self?.loadRecentRecords()
-                        }
-                    }
+                started = await engine.runQuickPickRecommendation(style: style) { [weak self] nextState in
+                    Task { @MainActor in self?.applyState(nextState) }
                 }
             } else {
-                await engine.runDailyRecommendation { [weak self] nextState in
-                    Task { @MainActor in
-                        self?.state = nextState
-                        if case .completed = nextState {
-                            self?.todayRecord = self?.loadTodayRecord()
-                            self?.totalRecommendations += 1
-                            await self?.loadRecentRecords()
-                        }
-                    }
+                started = await engine.runDailyRecommendation { [weak self] nextState in
+                    Task { @MainActor in self?.applyState(nextState) }
                 }
             }
+            if !started {
+                // The engine is busy (e.g. a background task is already running).
+                // Don't silently swallow the tap — surface an in-progress state.
+                state = .generating(progress: "正在后台生成，请稍候…")
+            }
+        }
+    }
+
+    private func applyState(_ nextState: RecommendationState) {
+        state = nextState
+        if case .completed = nextState {
+            todayRecord = loadTodayRecord()
+            totalRecommendations += 1
+            Task { await loadRecentRecords() }
         }
     }
 
@@ -142,8 +165,13 @@ final class HomeViewModel {
         let today = calendar.startOfDay(for: Date())
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
 
+        // Only a fully-completed `daily` record counts as "today done".
+        // A `pending` record (persisted but playlist not yet created) must not
+        // surface a phantom completed state.
         let predicate = #Predicate<RecommendationRecord> { record in
             record.date >= today && record.date < tomorrow
+                && record.source == "daily"
+                && record.status == "completed"
         }
         var descriptor = FetchDescriptor<RecommendationRecord>(predicate: predicate)
         descriptor.fetchLimit = 1

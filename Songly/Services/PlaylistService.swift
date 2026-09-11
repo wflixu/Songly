@@ -30,18 +30,15 @@ final class PlaylistService: PlaylistServiceProtocol {
         description: String,
         songs: [Song]
     ) async throws -> Playlist {
-        // Step 1: Create empty playlist
-        let playlist = try await MusicLibrary.shared.createPlaylist(
+        // Single network round-trip: create the playlist and add all tracks at
+        // once (instead of 25 serial `add` calls). `Song` conforms to
+        // `MusicPlaylistAddable`, so `[Song]` works as `items`.
+        return try await MusicLibrary.shared.createPlaylist(
             name: name,
-            description: description
+            description: description,
+            authorDisplayName: nil,
+            items: songs
         )
-
-        // Step 2: Add songs to playlist
-        for song in songs {
-            try await MusicLibrary.shared.add(song, to: playlist)
-        }
-
-        return playlist
     }
 
     func findPlaylist(named name: String) async throws -> Playlist? {

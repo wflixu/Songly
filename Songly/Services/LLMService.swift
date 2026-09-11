@@ -14,7 +14,6 @@ enum LLMServiceError: LocalizedError {
     case timeout
     case httpError(statusCode: Int, body: String?)
     case parseError(String)
-    case tooFewRecommendations(count: Int)
 
     var errorDescription: String? {
         switch self {
@@ -26,15 +25,29 @@ enum LLMServiceError: LocalizedError {
             return "AI 服务返回错误 (HTTP \(code))"
         case .parseError:
             return "AI 响应解析失败"
-        case .tooFewRecommendations(let count):
-            return "推荐结果不足 (仅 \(count) 首)"
         }
     }
 }
 
+// MARK: - Protocol
+
+/// 引擎依赖的抽象。
+///
+/// 原先 `LLMService` 是个**没有协议的 concrete class**，引擎在 LLM 这一层完全
+/// 无法 mock —— 补位轮的状态机、以及"第 N 轮请求有没有正确回显第 N−1 轮的
+/// `tool_use.id`"这类线格式 bug，都没法在没有真实网络请求的情况下验证。
+protocol LLMServiceProtocol: Sendable {
+    /// 发起一次 seed 请求。首轮与补位轮走的是同一个方法，
+    /// 区别只在于 `request.messages` 里有没有历史轮次。
+    func requestSeeds(_ request: SeedRequest) async throws -> SeedResponse
+
+    /// 归纳用户的口味画像。频率很低（最多一周一次），不进每日路径。
+    func requestTasteProfile(system: String, userMessage: String) async throws -> TasteProfilePayload
+}
+
 // MARK: - DeepSeek API Client
 
-final class LLMService {
+final class LLMService: LLMServiceProtocol {
     private let session: URLSession
     private let apiKey: String
 
@@ -47,39 +60,85 @@ final class LLMService {
         self.session = URLSession(configuration: config)
     }
 
-    func recommend(prompt: String) async throws -> [TrackItem] {
+    // MARK: - Seed API (v3)
+
+    func requestSeeds(_ request: SeedRequest) async throws -> SeedResponse {
         guard AppEnvironment.isAPIKeyConfigured else {
             throw LLMServiceError.apiKeyNotConfigured
         }
 
-        let body = try buildRequestBody(prompt: prompt)
+        let body = try buildSeedRequestBody(request)
         let data = try await performRequest(body: body)
-        return try parseResponse(data: data)
-    }
 
-    func healthCheck() async -> Bool {
         do {
-            let items = try await recommend(prompt: "推荐 1 首歌")
-            return !items.isEmpty
+            return try AnthropicSeedParser.parse(data)
         } catch {
-            return false
+            throw LLMServiceError.parseError(error.localizedDescription)
         }
     }
 
-    // MARK: - Private
+    /// 生成口味画像。走的是同一个传输层，只是换一个工具 schema。
+    func requestTasteProfile(system: String, userMessage: String) async throws -> TasteProfilePayload {
+        guard AppEnvironment.isAPIKeyConfigured else {
+            throw LLMServiceError.apiKeyNotConfigured
+        }
 
-    private func buildRequestBody(prompt: String) throws -> Data {
-        let requestBody: [String: Any] = [
-            "model": AppConfig.deepseekModel,
-            "max_tokens": 1000,
-            "system": "你是一个专业音乐推荐专家。只输出歌曲列表，每行格式「歌名 - 艺人名」，不输出任何额外说明。",
-            "messages": [
-                ["role": "user", "content": prompt]
-            ]
-        ]
+        let body = try JSONSerialization.data(withJSONObject: buildToolBody(
+            system: system,
+            toolName: TasteProfileToolSchema.name,
+            toolDescription: TasteProfileToolSchema.description,
+            inputSchema: TasteProfileToolSchema.inputSchema(),
+            messages: [["role": "user", "content": userMessage]]
+        ))
 
-        return try JSONSerialization.data(withJSONObject: requestBody)
+        let data = try await performRequest(body: body)
+
+        do {
+            let inputJSON = try AnthropicSeedParser.toolInput(in: data, named: TasteProfileToolSchema.name)
+            return try JSONDecoder().decode(TasteProfilePayload.self, from: inputJSON)
+        } catch {
+            throw LLMServiceError.parseError(error.localizedDescription)
+        }
     }
+
+    /// 内部可见而非 private：请求体的形状是容易静默出错的地方（模型 ID 写成
+    /// 已退役的名字、忘记加 `tool_choice`、把 thinking 打开），值得直接测。
+    func buildSeedRequestBody(_ request: SeedRequest) throws -> Data {
+        try JSONSerialization.data(withJSONObject: buildToolBody(
+            system: request.system,
+            toolName: SeedToolSchema.name,
+            toolDescription: SeedToolSchema.description,
+            inputSchema: SeedToolSchema.inputSchema(),
+            messages: request.messages.map(\.json)
+        ))
+    }
+
+    /// 强制工具调用的请求体。seed 与画像共用 —— 两者唯一的差别就是工具 schema。
+    func buildToolBody(
+        system: String,
+        toolName: String,
+        toolDescription: String,
+        inputSchema: [String: Any],
+        messages: [[String: Any]]
+    ) -> [String: Any] {
+        [
+            "model": AppConfig.deepseekModel,
+            "max_tokens": AppConfig.llmMaxOutputTokens,
+            // 强制 tool_choice 与 thinking 不能同时开（服务端返回 400），
+            // 所以这里必须是 disabled。
+            "thinking": ["type": "disabled"],
+            "system": system,
+            "tools": [[
+                "name": toolName,
+                "description": toolDescription,
+                "input_schema": inputSchema,
+            ]],
+            "tool_choice": ["type": "tool", "name": toolName],
+            "messages": messages,
+        ]
+    }
+
+    // MARK: - Transport
 
     private func performRequest(body: Data) async throws -> Data {
         let url = URL(string: AppConfig.deepseekBaseURL)!
@@ -127,74 +186,4 @@ final class LLMService {
 
         throw lastError ?? LLMServiceError.timeout
     }
-
-    // MARK: - Response Parsing
-
-    private func parseResponse(data: Data) throws -> [TrackItem] {
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let contentArray = json["content"] as? [[String: Any]],
-              let firstBlock = contentArray.first,
-              let content = firstBlock["text"] as? String
-        else {
-            throw LLMServiceError.parseError("Unexpected JSON structure")
-        }
-
-        let items = parseTrackList(from: content)
-        guard items.count >= AppConfig.minTrackCount else {
-            throw LLMServiceError.tooFewRecommendations(count: items.count)
-        }
-
-        return items
-    }
-
-    /// Parse LLM text output into [TrackItem], handling various formats.
-    private func parseTrackList(from text: String) -> [TrackItem] {
-        let lines = text.components(separatedBy: .newlines)
-        var results: [TrackItem] = []
-
-        for line in lines {
-            let cleaned = line
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                // Remove leading numbers/bullets
-                .replacingOccurrences(of: #"^\d+[\.\)、]\s*"#, with: "", options: .regularExpression)
-                .replacingOccurrences(of: #"^[-•·]\s*"#, with: "", options: .regularExpression)
-
-            guard !cleaned.isEmpty else { continue }
-
-            // Try to split on common separators
-            if let item = parseTrackLine(cleaned) {
-                results.append(item)
-            }
-        }
-
-        return results
-    }
-
-    private func parseTrackLine(_ line: String) -> TrackItem? {
-        // Normalize dashes and separators
-        let normalized = line
-            .replacingOccurrences(of: "—", with: "-")  // em dash
-            .replacingOccurrences(of: "–", with: "-")  // en dash
-
-        // Remove parenthetical notes like "(Remastered 2009)"
-        let cleaned = normalized
-            .replacingOccurrences(of: #"\s*\([^)]*\)"#, with: "", options: .regularExpression)
-            .replacingOccurrences(of: #"\s*（[^）]*）"#, with: "", options: .regularExpression)
-
-        // Try separators in order of priority
-        let separators = [" - ", " / ", " — ", "\" by ", ": "]
-        for sep in separators {
-            let components = cleaned.components(separatedBy: sep)
-            if components.count >= 2 {
-                let title = components[0].trimmingCharacters(in: .whitespaces)
-                let artist = components[1].trimmingCharacters(in: .whitespaces)
-                if !title.isEmpty && !artist.isEmpty {
-                    return TrackItem(title: title, artist: artist)
-                }
-            }
-        }
-
-        return nil
-    }
 }
-

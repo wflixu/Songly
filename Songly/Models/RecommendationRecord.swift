@@ -11,6 +11,9 @@ import SwiftData
 
 @Model
 final class RecommendationRecord {
+    static let statusPending = "pending"
+    static let statusCompleted = "completed"
+
     /// 推荐日期（唯一约束，用于"今日是否已生成"判断）。
     @Attribute(.unique) var date: Date
     /// 推荐策略标识。
@@ -27,6 +30,13 @@ final class RecommendationRecord {
     var quickPickStyle: String?
     /// 创建的播放列表名称。
     var playlistName: String?
+    /// 生成状态: "pending"（已落库、播放列表未建成）| "completed"。
+    /// 旧记录迁移默认视为 completed（历史上都建成了列表）。
+    var status: String = RecommendationRecord.statusCompleted
+    /// 已创建的 Apple Music 播放列表 ID（完成后写入）。
+    var playlistID: String?
+    /// 已创建的播放列表打开 URL（完成后写入）。
+    var playlistURL: URL?
 
     // MARK: - Computed: TrackInfo
 
@@ -62,7 +72,10 @@ final class RecommendationRecord {
         tracks: [TrackInfo],
         source: String,
         quickPickStyle: String? = nil,
-        playlistName: String? = nil
+        playlistName: String? = nil,
+        status: String = RecommendationRecord.statusPending,
+        playlistID: String? = nil,
+        playlistURL: URL? = nil
     ) {
         self.date = date
         self.strategy = strategy
@@ -75,5 +88,8 @@ final class RecommendationRecord {
         self.source = source
         self.quickPickStyle = quickPickStyle
         self.playlistName = playlistName
+        self.status = status
+        self.playlistID = playlistID
+        self.playlistURL = playlistURL
     }
 }

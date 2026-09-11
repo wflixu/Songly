@@ -31,6 +31,14 @@ extension DateFormatter {
         formatter.dateFormat = "M月d日"
         return formatter
     }()
+
+    /// "20260809" format for playlist naming.
+    static let compactDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "yyyyMMdd"
+        return formatter
+    }()
 }
 
 extension Date {
@@ -47,5 +55,10 @@ extension Date {
     /// "7月13日" format for playlist names.
     nonisolated var playlistDateString: String {
         DateFormatter.playlistDate.string(from: self)
+    }
+
+    /// "20260809" format for playlist names.
+    nonisolated var yyyyMMddString: String {
+        DateFormatter.compactDate.string(from: self)
     }
 }

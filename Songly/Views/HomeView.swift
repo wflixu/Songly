@@ -183,7 +183,7 @@ struct HomeView: View {
 
                 VStack(spacing: 10) {
                     Button {
-                        if let url = URL(string: "music://") {
+                        if let url = vm.todayRecord?.playlistURL ?? URL(string: "music://") {
                             UIApplication.shared.open(url)
                         }
                     } label: {

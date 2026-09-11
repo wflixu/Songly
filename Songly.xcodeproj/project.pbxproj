@@ -7,42 +7,56 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		061C5BA8F58D4B7281FE07F7 /* PlaylistCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFC69C3B88F247F4BF50A506 /* PlaylistCard.swift */; };
 		0A95CAC1C64EF95329C9977B /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08ADB09F56AF8A3EEF1491AD /* HomeViewModel.swift */; };
 		1212EAB8D7D7EEC2A029491C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 96C58E301600EEA39A231568 /* PrivacyInfo.xcprivacy */; };
 		2B42B76293C91002039C022F /* MusicKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413603C3B9605AD9F42C9C48 /* MusicKitService.swift */; };
 		37BAE319343901825DAD1DA1 /* SonglyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28C6622E7DC7F2D1A48E2DBD /* SonglyUITests.swift */; };
-		3853066FF916B83B4263F872 /* QuickPickViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20887D01A79EBE55A4130055 /* QuickPickViewModel.swift */; };
 		3D82FBA07BF43EC497824F5F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01F89F77CC564C5764852808 /* OnboardingView.swift */; };
 		486B0930B571AFC66E3B23C6 /* RecommendationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D19E60158AA26E38C2A072C /* RecommendationStrategy.swift */; };
 		5774CB032985AAEC82CBC5B9 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E86C9220E202A192DD65B8 /* AppConfig.swift */; };
 		5C7DF9ECB36A39609DAE07B4 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B732CCAECD8B3048A1F519 /* NetworkMonitor.swift */; };
-		5E2143B1FD51D77C7B02288D /* QuickPickView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20BB756EEA1E5171F4ABCDE8 /* QuickPickView.swift */; };
 		6B21DA3A1A653724C73D555B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A75045BA27FEB10D9E16C645 /* Assets.xcassets */; };
 		6F2F8D31F66E1B79828E365E /* SonglyUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D54452F19999EC354F46AB3 /* SonglyUITestsLaunchTests.swift */; };
 		71086B2C6EBE7BA659F1A17A /* SonglyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A42B1768A9C745068C07A2 /* SonglyTests.swift */; };
-		74C9A7EC2059780CBED1FDB2 /* StyleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D4DFCEBE0318269BC53961E /* StyleButton.swift */; };
+		76330E6FDFAF4B17BAB547A2 /* PlaylistHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE272DB5F1964FA9B7F11376 /* PlaylistHistoryView.swift */; };
 		7794CEB7D1B72AB3A2F168E2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618AA8EAA7057B298D7D3932 /* SettingsView.swift */; };
 		78FA3181303C4764B346EF34 /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BA290C41099656E6A563B48 /* LLMService.swift */; };
 		795F08DD519D761B90D8746D /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = E45438E6D5F8200931811381 /* AppEnvironment.swift */; };
+		7F1C2689745A49CB995104EA /* ImmersiveProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C49F00D1F0064E5FB0A5BCDA /* ImmersiveProgressView.swift */; };
 		925ADC78D703778A9A8B8C72 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8C974AF17F41608A1B158DEC /* Localizable.xcstrings */; };
-		992DC85E31D3BCB8DB3A0F2D /* RecommendationResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C0B305889488ED01A221F9 /* RecommendationResultView.swift */; };
+		98ECD402D157405A94907894 /* PlaylistDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B28CDF4081492DAFE884CA /* PlaylistDetailView.swift */; };
 		9F062352D9871A57E024706D /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17CFCF03DD9071B6B3D580BA /* HomeView.swift */; };
 		A02DF4EC18DF859E74E4E734 /* RecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5FBE63553377714E9032FF /* RecommendationEngine.swift */; };
 		A0E08186F4148DF255B20981 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D5FBCEDEA1EFAE7992B7DF /* NotificationService.swift */; };
 		A12F91F33F55D6133B651C15 /* BackgroundTaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A375634CDF9C86F4B86D5F0B /* BackgroundTaskService.swift */; };
 		AB3BB123E8927D37EF60AAA2 /* RecommendationRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873D900B40B7270AC99F5C1A /* RecommendationRecord.swift */; };
-		BD5DB522918540A3F04F34DA /* PromptBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A3E71D16FF2A1E7C834E51 /* PromptBuilder.swift */; };
 		D7A5ACEF3BFDA28DBAC381F0 /* SonglyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5683F6BC3E52346652CB591 /* SonglyApp.swift */; };
 		DC914C8B9438C04FF05BC1E4 /* DateFormatter+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB879AB742C18E085F944BB0 /* DateFormatter+Extensions.swift */; };
 		E1EFB26B81273719B0137AEC /* TrackItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457791E911116B8F01C1FA1E /* TrackItem.swift */; };
 		E312AFF31CF33ABFB4706BB3 /* PlaylistService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A607B8C47F286DDF37FC89B /* PlaylistService.swift */; };
 		E8E54666B1AF1AAC64495B5B /* TrackRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1406E422B4B094A80DCBC43B /* TrackRow.swift */; };
+		F0DEC0DE0000000000000002 /* RecommendationSeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000001 /* RecommendationSeed.swift */; };
+		F0DEC0DE0000000000000004 /* ContentTypeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000003 /* ContentTypeFilter.swift */; };
+		F0DEC0DE0000000000000006 /* PlaylistComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000005 /* PlaylistComposer.swift */; };
+		F0DEC0DE0000000000000008 /* ComposerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000007 /* ComposerTests.swift */; };
+		F0DEC0DE000000000000000A /* ContentTypeFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000009 /* ContentTypeFilterTests.swift */; };
+		F0DEC0DE000000000000000C /* SeedRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000000B /* SeedRequest.swift */; };
+		F0DEC0DE000000000000000E /* AnthropicSeedParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000000D /* AnthropicSeedParser.swift */; };
+		F0DEC0DE0000000000000010 /* LLMContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000000F /* LLMContractTests.swift */; };
+		F0DEC0DE0000000000000012 /* ListeningScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000011 /* ListeningScene.swift */; };
+		F0DEC0DE0000000000000014 /* SceneAndProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000013 /* SceneAndProfileTests.swift */; };
+		F0DEC0DE0000000000000016 /* TasteProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000015 /* TasteProfile.swift */; };
+		F0DEC0DE0000000000000018 /* TasteProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000017 /* TasteProfileStore.swift */; };
+		F0DEC0DE000000000000001A /* GapRoundPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000019 /* GapRoundPlanner.swift */; };
+		F0DEC0DE000000000000001C /* PipelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000001B /* PipelineTests.swift */; };
+		F0DEC0DE000000000000001E /* AlbumTrackPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000001D /* AlbumTrackPicker.swift */; };
+		F0DEC0DE0000000000000020 /* CatalogResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000001F /* CatalogResolver.swift */; };
+		F0DEC0DE0000000000000022 /* PromptBuilderV3.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000021 /* PromptBuilderV3.swift */; };
+		F0DEC0DE0000000000000026 /* TasteProfileRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000025 /* TasteProfileRefresher.swift */; };
+		F0DEC0DE0000000000000024 /* PromptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000023 /* PromptTests.swift */; };
 		F5383CFA411513A99AA9D8E8 /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8D6E45EE067C6184AD9D74 /* UserPreferences.swift */; };
-		7F1C2689745A49CB995104EA /* ImmersiveProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C49F00D1F0064E5FB0A5BCDA /* ImmersiveProgressView.swift */; };
-		061C5BA8F58D4B7281FE07F7 /* PlaylistCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFC69C3B88F247F4BF50A506 /* PlaylistCard.swift */; };
 		F945CC7DE73345DBAC7F3402 /* StylePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2494A6DA094C5EAB862D29 /* StylePickerView.swift */; };
-		98ECD402D157405A94907894 /* PlaylistDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B28CDF4081492DAFE884CA /* PlaylistDetailView.swift */; };
-		76330E6FDFAF4B17BAB547A2 /* PlaylistHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE272DB5F1964FA9B7F11376 /* PlaylistHistoryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,7 +81,7 @@
 		08ADB09F56AF8A3EEF1491AD /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		0BA290C41099656E6A563B48 /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
 		0D19E60158AA26E38C2A072C /* RecommendationStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationStrategy.swift; sourceTree = "<group>"; };
-		1034DB9A0B9795D8A176235F /* SonglyTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SonglyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1034DB9A0B9795D8A176235F /* SonglyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SonglyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1406E422B4B094A80DCBC43B /* TrackRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackRow.swift; sourceTree = "<group>"; };
 		17CFCF03DD9071B6B3D580BA /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		214B0142C0915AAE504A8A69 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
@@ -77,10 +91,11 @@
 		413603C3B9605AD9F42C9C48 /* MusicKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicKitService.swift; sourceTree = "<group>"; };
 		457791E911116B8F01C1FA1E /* TrackItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackItem.swift; sourceTree = "<group>"; };
 		53E86C9220E202A192DD65B8 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		56B28CDF4081492DAFE884CA /* PlaylistDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistDetailView.swift; sourceTree = "<group>"; };
 		5A607B8C47F286DDF37FC89B /* PlaylistService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistService.swift; sourceTree = "<group>"; };
+		5B2494A6DA094C5EAB862D29 /* StylePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StylePickerView.swift; sourceTree = "<group>"; };
 		618AA8EAA7057B298D7D3932 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6483D2D2704433FEBEF4A41F /* Songly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Songly.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		73A3E71D16FF2A1E7C834E51 /* PromptBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptBuilder.swift; sourceTree = "<group>"; };
 		873D900B40B7270AC99F5C1A /* RecommendationRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationRecord.swift; sourceTree = "<group>"; };
 		8A5FBE63553377714E9032FF /* RecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationEngine.swift; sourceTree = "<group>"; };
 		8C974AF17F41608A1B158DEC /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
@@ -89,16 +104,33 @@
 		A5683F6BC3E52346652CB591 /* SonglyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SonglyApp.swift; sourceTree = "<group>"; };
 		A6B732CCAECD8B3048A1F519 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		A75045BA27FEB10D9E16C645 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C49F00D1F0064E5FB0A5BCDA /* ImmersiveProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveProgressView.swift; sourceTree = "<group>"; };
 		C8A42B1768A9C745068C07A2 /* SonglyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SonglyTests.swift; sourceTree = "<group>"; };
 		CB879AB742C18E085F944BB0 /* DateFormatter+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DateFormatter+Extensions.swift"; sourceTree = "<group>"; };
 		D1E969B1A8661BD77B616C22 /* SonglyUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SonglyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E45438E6D5F8200931811381 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
-		F9D5FBCEDEA1EFAE7992B7DF /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
-		C49F00D1F0064E5FB0A5BCDA /* ImmersiveProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveProgressView.swift; sourceTree = "<group>"; };
-		FFC69C3B88F247F4BF50A506 /* PlaylistCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistCard.swift; sourceTree = "<group>"; };
-		5B2494A6DA094C5EAB862D29 /* StylePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StylePickerView.swift; sourceTree = "<group>"; };
-		56B28CDF4081492DAFE884CA /* PlaylistDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistDetailView.swift; sourceTree = "<group>"; };
 		EE272DB5F1964FA9B7F11376 /* PlaylistHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistHistoryView.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000001 /* RecommendationSeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationSeed.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000003 /* ContentTypeFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentTypeFilter.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000005 /* PlaylistComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistComposer.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000007 /* ComposerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerTests.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000009 /* ContentTypeFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentTypeFilterTests.swift; sourceTree = "<group>"; };
+		F0DEC0DE000000000000000B /* SeedRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedRequest.swift; sourceTree = "<group>"; };
+		F0DEC0DE000000000000000D /* AnthropicSeedParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicSeedParser.swift; sourceTree = "<group>"; };
+		F0DEC0DE000000000000000F /* LLMContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMContractTests.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000011 /* ListeningScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningScene.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000013 /* SceneAndProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneAndProfileTests.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000015 /* TasteProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteProfile.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000017 /* TasteProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteProfileStore.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000019 /* GapRoundPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GapRoundPlanner.swift; sourceTree = "<group>"; };
+		F0DEC0DE000000000000001B /* PipelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineTests.swift; sourceTree = "<group>"; };
+		F0DEC0DE000000000000001D /* AlbumTrackPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumTrackPicker.swift; sourceTree = "<group>"; };
+		F0DEC0DE000000000000001F /* CatalogResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogResolver.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000021 /* PromptBuilderV3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptBuilderV3.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000025 /* TasteProfileRefresher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteProfileRefresher.swift; sourceTree = "<group>"; };
+		F0DEC0DE0000000000000023 /* PromptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTests.swift; sourceTree = "<group>"; };
+		F9D5FBCEDEA1EFAE7992B7DF /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		FFC69C3B88F247F4BF50A506 /* PlaylistCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistCard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -106,6 +138,12 @@
 			isa = PBXGroup;
 			children = (
 				C8A42B1768A9C745068C07A2 /* SonglyTests.swift */,
+				F0DEC0DE0000000000000007 /* ComposerTests.swift */,
+				F0DEC0DE0000000000000009 /* ContentTypeFilterTests.swift */,
+				F0DEC0DE000000000000000F /* LLMContractTests.swift */,
+				F0DEC0DE0000000000000013 /* SceneAndProfileTests.swift */,
+				F0DEC0DE000000000000001B /* PipelineTests.swift */,
+				F0DEC0DE0000000000000023 /* PromptTests.swift */,
 			);
 			path = SonglyTests;
 			sourceTree = "<group>";
@@ -141,7 +179,7 @@
 			isa = PBXGroup;
 			children = (
 				CB879AB742C18E085F944BB0 /* DateFormatter+Extensions.swift */,
-				73A3E71D16FF2A1E7C834E51 /* PromptBuilder.swift */,
+				F0DEC0DE0000000000000021 /* PromptBuilderV3.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -170,6 +208,10 @@
 				873D900B40B7270AC99F5C1A /* RecommendationRecord.swift */,
 				0D19E60158AA26E38C2A072C /* RecommendationStrategy.swift */,
 				457791E911116B8F01C1FA1E /* TrackItem.swift */,
+				F0DEC0DE0000000000000001 /* RecommendationSeed.swift */,
+				F0DEC0DE000000000000000B /* SeedRequest.swift */,
+				F0DEC0DE0000000000000011 /* ListeningScene.swift */,
+				F0DEC0DE0000000000000015 /* TasteProfile.swift */,
 				2E8D6E45EE067C6184AD9D74 /* UserPreferences.swift */,
 			);
 			path = Models;
@@ -185,6 +227,14 @@
 				F9D5FBCEDEA1EFAE7992B7DF /* NotificationService.swift */,
 				5A607B8C47F286DDF37FC89B /* PlaylistService.swift */,
 				8A5FBE63553377714E9032FF /* RecommendationEngine.swift */,
+				F0DEC0DE0000000000000003 /* ContentTypeFilter.swift */,
+				F0DEC0DE0000000000000005 /* PlaylistComposer.swift */,
+				F0DEC0DE000000000000000D /* AnthropicSeedParser.swift */,
+				F0DEC0DE0000000000000017 /* TasteProfileStore.swift */,
+				F0DEC0DE0000000000000025 /* TasteProfileRefresher.swift */,
+				F0DEC0DE0000000000000019 /* GapRoundPlanner.swift */,
+				F0DEC0DE000000000000001D /* AlbumTrackPicker.swift */,
+				F0DEC0DE000000000000001F /* CatalogResolver.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -287,6 +337,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4A2D2032C017070C404EB234 /* Build configuration list for PBXNativeTarget "Songly" */;
 			buildPhases = (
+				9D20F2BF04424CA1A8A3CD9B /* Generate API Config */,
 				7F332EA51C6B9E270E71546F /* Sources */,
 				6E3A82950D75D224A0DE54E5 /* Resources */,
 			);
@@ -351,6 +402,21 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		9D20F2BF04424CA1A8A3CD9B /* Generate API Config */ = {
+			isa = PBXShellScriptBuildPhase;
+			name = "Generate API Config";
+			shellPath = /bin/sh;
+			shellScript = (
+				"if [ -f \"$SRCROOT/Songly/Config/api_key.env\" ]; then DEEPSEEK_API_KEY=$(cat \"$SRCROOT/Songly/Config/api_key.env\" | tr -d '[:space:]'); fi",
+				"cat > \"$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/api_config.json\" << EOF",
+				"{\"DEEPSEEK_API_KEY\": \"$DEEPSEEK_API_KEY\"}",
+				"EOF",
+				"",
+			);
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		59FD0E318B7C42756DC53B28 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -363,6 +429,18 @@
 			isa = PBXSourcesBuildPhase;
 			files = (
 				5774CB032985AAEC82CBC5B9 /* AppConfig.swift in Sources */,
+				F0DEC0DE0000000000000002 /* RecommendationSeed.swift in Sources */,
+				F0DEC0DE0000000000000004 /* ContentTypeFilter.swift in Sources */,
+				F0DEC0DE0000000000000006 /* PlaylistComposer.swift in Sources */,
+				F0DEC0DE000000000000000C /* SeedRequest.swift in Sources */,
+				F0DEC0DE000000000000000E /* AnthropicSeedParser.swift in Sources */,
+				F0DEC0DE0000000000000012 /* ListeningScene.swift in Sources */,
+				F0DEC0DE0000000000000016 /* TasteProfile.swift in Sources */,
+				F0DEC0DE0000000000000018 /* TasteProfileStore.swift in Sources */,
+				F0DEC0DE0000000000000026 /* TasteProfileRefresher.swift in Sources */,
+				F0DEC0DE000000000000001A /* GapRoundPlanner.swift in Sources */,
+				F0DEC0DE000000000000001E /* AlbumTrackPicker.swift in Sources */,
+				F0DEC0DE0000000000000020 /* CatalogResolver.swift in Sources */,
 				795F08DD519D761B90D8746D /* AppEnvironment.swift in Sources */,
 				A12F91F33F55D6133B651C15 /* BackgroundTaskService.swift in Sources */,
 				DC914C8B9438C04FF05BC1E4 /* DateFormatter+Extensions.swift in Sources */,
@@ -374,7 +452,7 @@
 				A0E08186F4148DF255B20981 /* NotificationService.swift in Sources */,
 				3D82FBA07BF43EC497824F5F /* OnboardingView.swift in Sources */,
 				E312AFF31CF33ABFB4706BB3 /* PlaylistService.swift in Sources */,
-				BD5DB522918540A3F04F34DA /* PromptBuilder.swift in Sources */,
+				F0DEC0DE0000000000000022 /* PromptBuilderV3.swift in Sources */,
 				A02DF4EC18DF859E74E4E734 /* RecommendationEngine.swift in Sources */,
 				AB3BB123E8927D37EF60AAA2 /* RecommendationRecord.swift in Sources */,
 				486B0930B571AFC66E3B23C6 /* RecommendationStrategy.swift in Sources */,
@@ -394,6 +472,12 @@
 			isa = PBXSourcesBuildPhase;
 			files = (
 				71086B2C6EBE7BA659F1A17A /* SonglyTests.swift in Sources */,
+				F0DEC0DE0000000000000008 /* ComposerTests.swift in Sources */,
+				F0DEC0DE000000000000000A /* ContentTypeFilterTests.swift in Sources */,
+				F0DEC0DE0000000000000010 /* LLMContractTests.swift in Sources */,
+				F0DEC0DE0000000000000014 /* SceneAndProfileTests.swift in Sources */,
+				F0DEC0DE000000000000001C /* PipelineTests.swift in Sources */,
+				F0DEC0DE0000000000000024 /* PromptTests.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */
@@ -443,6 +527,10 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.SonglyTests;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Songly.app/Songly";
 			};
@@ -454,8 +542,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEEPSEEK_API_KEY = "$(DEEPSEEK_API_KEY)";
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 4L3563XCBN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -464,17 +551,17 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "乐遇";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "乐遇需要访问你的 Apple Music 收藏，以便 AI 为你生成个性化推荐歌单。";
-				INFOPLIST_KEY_UIBackgroundModes = fetch;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIBackgroundModes = fetch;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.Songly;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -501,6 +588,10 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.SonglyTests;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Songly.app/Songly";
 			};
@@ -576,8 +667,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEEPSEEK_API_KEY = "$(DEEPSEEK_API_KEY)";
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 4L3563XCBN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -586,17 +676,17 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "乐遇";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "乐遇需要访问你的 Apple Music 收藏，以便 AI 为你生成个性化推荐歌单。";
-				INFOPLIST_KEY_UIBackgroundModes = fetch;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIBackgroundModes = fetch;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.wflixu.Songly;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
