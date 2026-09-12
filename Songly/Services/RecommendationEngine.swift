@@ -148,13 +148,36 @@ actor RecommendationEngine {
         source: String,
         onStateChange: @escaping @Sendable (RecommendationState) -> Void
     ) async {
-        // Release the run guard only when the pipeline actually exits, so a
-        // cancelled-but-still-running pipeline can't be re-entered.
-        defer { self.isRunning = false }
-
         let startedAt = Date()
         let reportState = { @MainActor @Sendable (state: RecommendationState) in
             onStateChange(state)
+        }
+
+        /// 已落库、但播放列表还没建成的记录。
+        ///
+        /// 取消若正好落在「persist」与「创建播放列表」之间，这条记录会被留在
+        /// 库里永远无法收尾 —— 而 `PlaylistHistoryView` 的 `@Query` 不过滤
+        /// status，它会显示成一份 Apple Music 中并不存在的歌单。
+        var pendingRecordID: PersistentIdentifier?
+
+        // Release the run guard only when the pipeline actually exits, so a
+        // cancelled-but-still-running pipeline can't be re-entered.
+        //
+        // 取消时必须**补发一个终态**：管线里所有取消分支（`Task.isCancelled`
+        // 那几处）都是裸 `return`，一句终态都不发。此前 UI 从没接过 `cancel()`，
+        // 所以没人发现；一旦接上，「取消生成」之后界面会永远停在进度卡上 ——
+        // 而那张卡只有「取消」一个按钮，没有任何退路，用户只能杀掉 App。
+        //
+        // 报 `.idle` 而不是 `.error`：取消不是错误。`HomeViewModel` 收到之后会
+        // 据实从数据库恢复（今天可能本来就有一份已完成的歌单）。
+        defer {
+            self.isRunning = false
+            if Task.isCancelled {
+                if let pending = pendingRecordID {
+                    Task { _ = await self.deleteRecommendation(modelID: pending) }
+                }
+                Task { await reportState(.idle) }
+            }
         }
 
         // ---- Step 1: Authorization ----
@@ -432,11 +455,16 @@ actor RecommendationEngine {
             tracks: matchedTracks,
             source: source,
             quickPickStyle: quickPickStyle?.rawValue,
-            playlistName: playlistName
+            playlistName: playlistName,
+            // 只给每日推荐记场景。QuickPick 的身份是用户点名的那个风格，
+            // 记上「深夜」会让卡片的场景带写着与内容不符的由来。
+            scene: quickPickStyle == nil ? scene.scene.rawValue : nil
         ) else {
             await reportState(.error(message: "数据保存失败，请稍后重试", retryable: true))
             return
         }
+        // 从这一刻起库里有一条未收尾的记录，取消路径需要负责清掉它。
+        pendingRecordID = modelID
 
         // ---- Step 8: Playlist ----
         await reportState(.creatingPlaylist)
@@ -458,6 +486,8 @@ actor RecommendationEngine {
             playlistID: playlist.id.rawValue,
             playlistURL: playlist.url
         )
+        // 已收尾，取消路径不必再管它。
+        pendingRecordID = nil
 
         // ---- Step 9: Done ----
         await reportState(.completed(trackCount: matchedTracks.count, playlistName: playlist.name))
@@ -714,7 +744,8 @@ actor RecommendationEngine {
         tracks: [TrackInfo],
         source: String,
         quickPickStyle: String?,
-        playlistName: String?
+        playlistName: String?,
+        scene: String?
     ) -> PersistentIdentifier? {
         let context = modelContainer.mainContext
         let record = RecommendationRecord(
@@ -725,7 +756,8 @@ actor RecommendationEngine {
             source: source,
             quickPickStyle: quickPickStyle,
             playlistName: playlistName,
-            status: RecommendationRecord.statusPending
+            status: RecommendationRecord.statusPending,
+            scene: scene
         )
         context.insert(record)
         do {

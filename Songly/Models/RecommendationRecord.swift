@@ -37,6 +37,13 @@ final class RecommendationRecord {
     var playlistID: String?
     /// 已创建的播放列表打开 URL（完成后写入）。
     var playlistURL: URL?
+    /// 生成时所属的听力场景（`ListeningScene.rawValue`）。
+    ///
+    /// 场景是**这份歌单的属性**，不是「现在几点」—— 卡片上显示它，回答的是
+    /// 「这份歌单是在什么情境下生成的」。理由文案刻意不落库：它由
+    /// `SceneBrief.brief(for:isWeekend:)` 从 scene + 日期纯函数派生，
+    /// 存一份副本只会多一处可能不一致的地方。旧记录为 nil。
+    var scene: String? = nil
 
     // MARK: - Computed: TrackInfo
 
@@ -63,6 +70,49 @@ final class RecommendationRecord {
     /// 便捷: 艺人名列表。
     var artistNames: [String] { tracks.map(\.artist) }
 
+    // MARK: - Computed: 展示
+
+    /// 给人看的歌单标题。
+    ///
+    /// **不要直接用 `playlistName`** —— 那是 Apple Music 里的播放列表名，带着
+    /// emoji 和 `20260912` 这样的日期后缀（同日第二份还有 `-02` 序号），在列表里
+    /// 既难看、又和行尾的相对时间重复。
+    var displayTitle: String {
+        if let style = quickPickStyle, let parsed = QuickPickStyle(rawValue: style) {
+            return "\(parsed.rawValue)精选"
+        }
+        return "每日推荐"
+    }
+
+    /// 已解析的听力场景。旧记录（本次改动之前生成的）为 nil。
+    var sceneValue: ListeningScene? {
+        scene.flatMap(ListeningScene.init(rawValue:))
+    }
+
+    /// 层级分布。旧记录里每首歌的 tier 都是 nil，因此返回空字典、
+    /// 卡片相应地不显示这一行。
+    var tierCounts: [DiscoveryTier: Int] {
+        var counts: [DiscoveryTier: Int] = [:]
+        for track in tracks {
+            guard let tier = track.tier else { continue }
+            counts[tier, default: 0] += 1
+        }
+        return counts
+    }
+
+    /// 「喜欢 18 · 新鲜 5 · 大胆 2」。三层的叙事在 UI 上的唯一呈现。
+    /// 旧记录没有 tier，返回 nil，调用方就不显示这一行。
+    var tierSummary: String? {
+        let counts = tierCounts
+        guard !counts.isEmpty else { return nil }
+        return DiscoveryTier.allCases
+            .compactMap { tier in
+                guard let count = counts[tier], count > 0 else { return nil }
+                return "\(tier.shortName) \(count)"
+            }
+            .joined(separator: " · ")
+    }
+
     // MARK: - Init
 
     init(
@@ -75,7 +125,8 @@ final class RecommendationRecord {
         playlistName: String? = nil,
         status: String = RecommendationRecord.statusPending,
         playlistID: String? = nil,
-        playlistURL: URL? = nil
+        playlistURL: URL? = nil,
+        scene: String? = nil
     ) {
         self.date = date
         self.strategy = strategy
@@ -91,5 +142,6 @@ final class RecommendationRecord {
         self.status = status
         self.playlistID = playlistID
         self.playlistURL = playlistURL
+        self.scene = scene
     }
 }

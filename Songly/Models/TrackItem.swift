@@ -18,6 +18,23 @@ struct TrackInfo: Codable, Equatable, Sendable {
     let name: String
     /// Artist name.
     let artist: String
+
+    /// 专辑封面直链（160×160）。可选 —— 旧记录里没有，缺图时由
+    /// `ArtworkThumbnail` 用品牌渐变占位。
+    ///
+    /// **必须是 `var` + 默认值，不能写成 `let artworkURL: String?`** ——
+    /// `let` 带默认值会被排除出合成的 memberwise init，`CatalogResolver`
+    /// 就永远设不进去；`var` 则保留为「带默认值的参数」，既能传，又让已有的
+    /// `TrackInfo(id:name:artist:)` 调用点（含测试与 #Preview）全部继续编译。
+    var artworkURL: String? = nil
+
+    /// 这首歌是在哪一层被选中的（大概率喜欢 / 新鲜尝试 / 大胆探索）。
+    /// 同样必须是 `var` + 默认值。旧记录解码后为 nil，不显示徽章。
+    var tier: DiscoveryTier? = nil
+
+    /// 这首歌在 Apple Music 里的规范链接（`Song.url`）。点一行跳过去要用它 ——
+    /// 没有它，曲目行要么不可点、要么只能退化成打开 Music App 首页。
+    var url: String? = nil
 }
 
 // MARK: - TrackItem (LLM response)

@@ -12,6 +12,12 @@ extension Notification.Name {
     /// Posted when a background daily recommendation completes, so the
     /// foreground UI (HomeViewModel) can reload today's record.
     static let recommendationDidComplete = Notification.Name("cn.wflixu.Songly.recommendationDidComplete")
+
+    /// Posted when a record is deleted from the detail view.
+    ///
+    /// `PlaylistHistoryView` 用 `@Query` 驱动，会自动更新；而首页的
+    /// `recentRecords` 是手动 fetch 的，需要这声通知才不会留下一行幽灵。
+    static let recommendationRecordDeleted = Notification.Name("cn.wflixu.Songly.recommendationRecordDeleted")
 }
 
 @MainActor

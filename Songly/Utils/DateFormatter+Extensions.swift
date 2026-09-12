@@ -39,6 +39,14 @@ extension DateFormatter {
         formatter.dateFormat = "yyyyMMdd"
         return formatter
     }()
+
+    /// "22:04" format.
+    static let timeOfDay: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
 }
 
 extension Date {
@@ -60,5 +68,20 @@ extension Date {
     /// "20260809" format for playlist names.
     nonisolated var yyyyMMddString: String {
         DateFormatter.compactDate.string(from: self)
+    }
+
+    /// 「今天 22:04」/「昨天」/「7月13日」—— 列表行里的相对时间。
+    ///
+    /// 今天刻意带上时刻：同一天内可能生成多份（重试、QuickPick），
+    /// 只显示「今天」会让两行看起来一模一样。
+    nonisolated var relativeDayString: String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(self) {
+            return "今天 " + DateFormatter.timeOfDay.string(from: self)
+        }
+        if calendar.isDateInYesterday(self) {
+            return "昨天"
+        }
+        return chineseDateString
     }
 }

@@ -2,380 +2,202 @@
 //  HomeView.swift
 //  Songly
 //
+//  单屏首页。App 只有一件事 —— 每天给你一份歌单 —— 所以屏幕也只有一件事。
+//
+//  刻意**没有底部 Tab**：两个常驻页签（首页/设置）对「一件事」的 App 是多余的，
+//  设置收进导航栏右上角。
+//
+//  横向 padding 由每个子视图各自承担，而不是套在最外层 VStack 上 —— 风格
+//  chips 需要通铺到屏幕边缘才能横向滚动出血。
+//
 
 import SwiftUI
 import MusicKit
-
-private enum AuthStatus {
-    case notDetermined, authorized, denied
-}
+import UIKit
 
 struct HomeView: View {
     @Environment(HomeViewModel.self) private var vm
-    @State private var auth: AuthStatus = .notDetermined
 
     var body: some View {
+        @Bindable var vm = vm
+
         Group {
-            switch auth {
+            switch vm.authStatus {
             case .notDetermined:
-                OnboardingView(onAuthorize: requestAuth)
-            case .denied:
-                DeniedView()
-            case .authorized:
-                ScrollView {
-                    VStack(spacing: 20) {
-                        heroBanner
-                        todayCard
-                        recentPlaylistsSection
-                        statsSection
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 24)
+                OnboardingView {
+                    Task { await vm.requestMusicAuthorization() }
                 }
-                .background(Color(.systemGroupedBackground))
+            case .denied:
+                DeniedView {
+                    Task { await vm.refreshPermissionState() }
+                }
+            case .authorized:
+                content
             }
         }
         .background(Color(.systemGroupedBackground))
-        .task { checkAuth() }
-        .sheet(isPresented: Binding(
-            get: { vm.showStylePicker },
-            set: { vm.showStylePicker = $0 }
-        )) {
-            StylePickerView { style in
+        .navigationTitle("乐遇")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    vm.showSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                .accessibilityLabel("设置")
+            }
+        }
+        .sheet(isPresented: $vm.showSettings) {
+            SettingsView()
+        }
+    }
+
+    // MARK: - Content
+
+    private var content: some View {
+        ScrollView {
+            VStack(spacing: Theme.Spacing.xl) {
+                TodayCard(
+                    state: vm.state,
+                    record: vm.todayRecord,
+                    canTrigger: vm.canTrigger,
+                    isOffline: vm.isOffline,
+                    actions: TodayCard.Actions(
+                        generate: vm.triggerDailyRecommendation,
+                        regenerate: vm.forceRegenerate,
+                        openInMusic: openInMusic,
+                        cancel: vm.cancelGeneration
+                    )
+                )
+                .padding(.horizontal, Theme.Spacing.page)
+
+                styleSection
+                recentSection
+            }
+            .padding(.top, Theme.Spacing.lg)
+            .padding(.bottom, Theme.Spacing.xl)
+        }
+    }
+
+    // MARK: - 换个心情
+
+    private var styleSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("换个心情")
+                .font(.headline)
+                .padding(.horizontal, Theme.Spacing.page)
+
+            StyleChips(isEnabled: vm.canTrigger) { style in
                 vm.triggerStyledRecommendation(style: style)
             }
         }
     }
 
-    // MARK: - Hero Header
+    // MARK: - 最近
 
-    private var heroBanner: some View {
-        LinearGradient(
-            colors: [.pink.opacity(0.85), .purple.opacity(0.6), .blue.opacity(0.7)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .overlay(alignment: .leading) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("乐遇")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .fontDesign(.rounded)
-                    .foregroundStyle(.white)
-                Text("\(Date().chineseDateString) · \(Date().chineseWeekdayString)")
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.85))
-                Text("AI 驱动的个性化歌单")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
-            }
-            .padding(20)
-        }
-        .frame(height: 100)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-    }
-
-    // MARK: - Today Card
-
-    @ViewBuilder
-    private var todayCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            switch vm.state {
-            case .idle, .onboarding:
-                idleCard
-            case .completed(let count, let name):
-                completedCard(trackCount: count, playlistName: name)
-            case .readingLibrary, .generating, .searchingCatalog, .persistingRecord, .creatingPlaylist:
-                ImmersiveProgressView(state: vm.state, onCancel: {})
-            case .error(let msg, let retry):
-                errorCard(message: msg, retryable: retry)
-            }
-        }
-    }
-
-    // MARK: Idle State
-
-    private var idleCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("今日推荐")
-                .font(.headline)
-                .padding(.leading, 4)
-
-            VStack(spacing: 16) {
-                VStack(spacing: 4) {
-                    Text("✨ 准备好发现新音乐了吗？")
-                        .font(.body)
-                        .fontWeight(.medium)
-                    Text("基于你的收藏品味，AI 为你推荐专属好歌")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.top, 8)
-
-                // Direct generate button
-                Button {
-                    vm.triggerDailyRecommendation()
-                } label: {
-                    Label("直接生成歌单", systemImage: "wand.and.stars")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(
-                            LinearGradient(
-                                colors: [.blue, .purple.opacity(0.8)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ),
-                            in: RoundedRectangle(cornerRadius: 14)
-                        )
-                }
-                .disabled(!vm.canTrigger)
-
-                // Style picker button
-                Button {
-                    vm.showStylePicker = true
-                } label: {
-                    Label("选择风格生成", systemImage: "paintpalette")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                }
-                .buttonStyle(.bordered)
-                .disabled(!vm.canTrigger)
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity)
-            .background(.background, in: RoundedRectangle(cornerRadius: 20))
-            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
-        }
-    }
-
-    // MARK: Completed State
-
-    private func completedCard(trackCount: Int, playlistName: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("今日推荐")
-                .font(.headline)
-                .padding(.leading, 4)
-
-            VStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(.green.opacity(0.1))
-                        .frame(width: 64, height: 64)
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 30))
-                        .foregroundStyle(.green)
-                }
-
-                VStack(spacing: 4) {
-                    Text("歌单已就绪")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                    Text("「\(playlistName)」")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Text("共 \(trackCount) 首歌曲")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                VStack(spacing: 10) {
-                    Button {
-                        if let url = vm.todayRecord?.playlistURL ?? URL(string: "music://") {
-                            UIApplication.shared.open(url)
-                        }
-                    } label: {
-                        Label("在 Apple Music 中查看", systemImage: "play.circle.fill")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(.green, in: RoundedRectangle(cornerRadius: 14))
-                    }
-
-                    Button {
-                        vm.forceRegenerate()
-                    } label: {
-                        Label("重新生成", systemImage: "arrow.triangle.2.circlepath")
-                            .font(.subheadline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                    }
-                    .buttonStyle(.bordered)
-                }
-            }
-            .padding(24)
-            .frame(maxWidth: .infinity)
-            .background(.background, in: RoundedRectangle(cornerRadius: 20))
-            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
-        }
-    }
-
-    // MARK: Error State
-
-    private func errorCard(message: String, retryable: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("今日推荐")
-                .font(.headline)
-                .padding(.leading, 4)
-
-            VStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(.orange.opacity(0.1))
-                        .frame(width: 64, height: 64)
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 30))
-                        .foregroundStyle(.orange)
-                }
-
-                Text(message)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-
-                if retryable {
-                    Button("重试") {
-                        vm.triggerDailyRecommendation()
-                    }
-                    .buttonStyle(.bordered)
-                }
-            }
-            .padding(24)
-            .frame(maxWidth: .infinity)
-            .background(.background, in: RoundedRectangle(cornerRadius: 20))
-            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
-        }
-    }
-
-    // MARK: - Recent Playlists
-
-    private var recentPlaylistsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private var recentSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack {
-                Text("最近歌单")
+                Text("最近")
                     .font(.headline)
+
                 Spacer()
+
                 if !vm.recentRecords.isEmpty {
-                    NavigationLink("查看全部") {
-                        PlaylistHistoryView()
-                    }
-                    .font(.subheadline)
+                    NavigationLink("查看全部") { PlaylistHistoryView() }
+                        .font(.subheadline)
                 }
             }
-            .padding(.leading, 4)
+            .padding(.horizontal, Theme.Spacing.page)
 
             if vm.recentRecords.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "music.note.list")
-                        .font(.title2)
-                        .foregroundStyle(.tertiary)
-                    Text("生成第一份歌单后，它会出现在这里")
-                        .font(.subheadline)
-                        .foregroundStyle(.tertiary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 32)
-                .background(.background, in: RoundedRectangle(cornerRadius: 14))
+                Text("生成第一份歌单后，它会出现在这里")
+                    .font(.subheadline)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 32)
+                    .cardSurface(radius: Theme.Radius.control)
+                    .padding(.horizontal, Theme.Spacing.page)
             } else {
-                VStack(spacing: 8) {
+                VStack(spacing: Theme.Spacing.sm) {
                     ForEach(vm.recentRecords) { record in
                         NavigationLink {
                             PlaylistDetailView(record: record)
                         } label: {
-                            PlaylistCard(record: record)
+                            PlaylistRow(record: record, showsDisclosure: true)
                         }
                         .buttonStyle(.plain)
                     }
                 }
+                .padding(.horizontal, Theme.Spacing.page)
             }
         }
     }
 
-    // MARK: - Stats
+    // MARK: - Actions
 
-    private var statsSection: some View {
-        HStack(spacing: 12) {
-            statCard(
-                icon: "music.note.list",
-                value: "\(vm.totalRecommendations)",
-                label: "份歌单"
-            )
-            statCard(
-                icon: "clock",
-                value: "每日 6:00",
-                label: "自动推荐"
-            )
-        }
-    }
-
-    private func statCard(icon: String, value: String, label: String) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(.tint)
-            Text(value)
-                .font(.headline)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
-        .background(.background, in: RoundedRectangle(cornerRadius: 14))
-    }
-
-    // MARK: - Helpers
-
-    private func requestAuth() {
-        Task {
-            let status = await MusicAuthorization.request()
-            await MainActor.run {
-                auth = (status == .authorized) ? .authorized : .denied
-            }
-        }
-    }
-
-    private func checkAuth() {
-        switch MusicAuthorization.currentStatus {
-        case .authorized:          auth = .authorized
-        case .denied, .restricted: auth = .denied
-        default:                   auth = .notDetermined
-        }
+    /// 打开今天那份歌单。
+    ///
+    /// 退到 `music://` 只在**引擎确实没拿到深链**时发生（`Playlist.url` 本身
+    /// 是 Optional）。这和之前的 bug 不是一回事 —— 那时是因为 QuickPick 记录
+    /// 根本没被 `todayRecord` 认出来，导致每一次都退化。
+    private func openInMusic() {
+        let url = vm.todayRecord?.playlistURL ?? URL(string: "music://")
+        guard let url else { return }
+        UIApplication.shared.open(url)
     }
 }
 
-// MARK: - Denied View
+// MARK: - 授权被拒
 
 private struct DeniedView: View {
+    let onRetry: () -> Void
+
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: Theme.Spacing.xl) {
             Spacer()
-            Circle()
-                .fill(.secondary.opacity(0.12))
-                .frame(width: 100, height: 100)
-                .overlay {
-                    Image(systemName: "lock.shield.fill")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.secondary)
-                }
-            Text("需要 Apple Music 访问权限")
-                .font(.title3)
-                .fontWeight(.semibold)
-            Text("请在设置中开启权限，乐遇才能为你生成个性化推荐。")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button("打开设置") {
-                if let url = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(url)
-                }
+
+            Image(systemName: "lock.shield.fill")
+                .font(.system(size: 44))
+                .foregroundStyle(.tertiary)
+
+            VStack(spacing: Theme.Spacing.sm) {
+                Text("需要 Apple Music 访问权限")
+                    .font(.title3.weight(.semibold))
+                Text("请在设置中开启权限，乐遇才能为你生成个性化推荐。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
             }
-            .buttonStyle(.borderedProminent)
+
+            VStack(spacing: Theme.Spacing.sm) {
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Text("打开设置")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: Theme.Size.primaryButton)
+                }
+                .buttonStyle(.borderedProminent)
+
+                // 没有这个按钮，用户授权完回到 App 仍然停在这一页 ——
+                // 授权状态只在进前台时刷新，而这一页本身不会自己重算。
+                Button("我已授权，重试", action: onRetry)
+                    .font(.subheadline)
+            }
+            .padding(.horizontal, 32)
+
             Spacer()
         }
-        .padding()
+        .padding(Theme.Spacing.xl)
     }
 }
+
+// HomeView 没有 `#Preview`：它依赖整套服务图（engine / container / 后台服务），
+// 在预览里搭一遍既啰嗦又脆弱，而且真实运行时要先过 MusicKit 授权、预览里只会
+// 停在 Onboarding。各组件（TodayCard / StyleChips / PlaylistRow / TrackRow）
+// 都有自己的 preview，那才是值得看的地方。

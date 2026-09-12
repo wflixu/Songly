@@ -264,13 +264,36 @@ final class CatalogResolver: CatalogResolving {
         FailedSeed(artist: seed.artist, title: seed.title, album: seed.album, reason: reason)
     }
 
+    /// 取 160×160 的封面直链。
+    ///
+    /// **必须 clamp**：`Artwork.url(width:height:)` 在请求尺寸超过
+    /// `maximumWidth` / `maximumHeight` 时**返回 nil**，不 clamp 会静默丢掉
+    /// 一大批封面（表现为列表里零星缺图，很难归因）。
+    ///
+    /// 注意返回的是**已解析好的 CDN 直链**（尺寸烤进了路径），不是模板 ——
+    /// 改不了下载的字节数，所以按用途存尺寸，别存大图再缩。
+    private static func artworkURL(_ artwork: Artwork?, side: Int = 160) -> String? {
+        guard let artwork else { return nil }
+        return artwork.url(
+            width: min(side, artwork.maximumWidth),
+            height: min(side, artwork.maximumHeight)
+        )?.absoluteString
+    }
+
     private static func candidate(
         from song: Song,
         seed: RecommendationSeed,
         albumTrackCount: Int?
     ) -> ResolvedCandidate {
         ResolvedCandidate(
-            info: TrackInfo(id: song.id.rawValue, name: song.title, artist: song.artistName),
+            info: TrackInfo(
+                id: song.id.rawValue,
+                name: song.title,
+                artist: song.artistName,
+                artworkURL: artworkURL(song.artwork),
+                tier: seed.tier,
+                url: song.url?.absoluteString
+            ),
             tier: seed.tier,
             seedKind: seed.kind,
             rawTitle: song.title,

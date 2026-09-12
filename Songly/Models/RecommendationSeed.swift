@@ -26,6 +26,23 @@ enum DiscoveryTier: String, Codable, CaseIterable, Sendable {
         case .bold: return "大胆探索"
         }
     }
+
+    /// 曲目行徽章上的短名。`displayName` 在行内太长。
+    var shortName: String {
+        switch self {
+        case .confident: return "喜欢"
+        case .fresh: return "新鲜"
+        case .bold: return "大胆"
+        }
+    }
+
+    /// 是否在曲目行上打徽章。
+    ///
+    /// `confident` **刻意不打** —— 它占 70%，是默认值，给默认值加标记只会
+    /// 让每行都多一个元素却传达不了信息。只有真正"新"的两层值得被标出来。
+    var showsBadge: Bool {
+        self != .confident
+    }
 }
 
 // MARK: - TierQuota
