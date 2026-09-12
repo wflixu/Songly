@@ -15,6 +15,10 @@
 		486B0930B571AFC66E3B23C6 /* RecommendationStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D19E60158AA26E38C2A072C /* RecommendationStrategy.swift */; };
 		5774CB032985AAEC82CBC5B9 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E86C9220E202A192DD65B8 /* AppConfig.swift */; };
 		7A1E9C4B3D5F608192A3B4C5 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E9C4B3D5F608192A3B4C6 /* Theme.swift */; };
+		B2C3D4E5F60718293A4B5C06 /* FeedbackHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C07 /* FeedbackHistoryView.swift */; };
+		B2C3D4E5F60718293A4B5C00 /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C01 /* Feedback.swift */; };
+		B2C3D4E5F60718293A4B5C02 /* FeedbackStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C03 /* FeedbackStore.swift */; };
+		B2C3D4E5F60718293A4B5C04 /* MusicLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C05 /* MusicLibraryService.swift */; };
 		5C7DF9ECB36A39609DAE07B4 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B732CCAECD8B3048A1F519 /* NetworkMonitor.swift */; };
 		6B21DA3A1A653724C73D555B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A75045BA27FEB10D9E16C645 /* Assets.xcassets */; };
 		6F2F8D31F66E1B79828E365E /* SonglyUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D54452F19999EC354F46AB3 /* SonglyUITestsLaunchTests.swift */; };
@@ -43,6 +47,7 @@
 		F0DEC0DE0000000000000004 /* ContentTypeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000003 /* ContentTypeFilter.swift */; };
 		F0DEC0DE0000000000000006 /* PlaylistComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000005 /* PlaylistComposer.swift */; };
 		F0DEC0DE0000000000000008 /* ComposerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000007 /* ComposerTests.swift */; };
+		B2C3D4E5F60718293A4B5C08 /* FeedbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C09 /* FeedbackTests.swift */; };
 		F0DEC0DE000000000000000A /* ContentTypeFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000009 /* ContentTypeFilterTests.swift */; };
 		F0DEC0DE000000000000000C /* SeedRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000000B /* SeedRequest.swift */; };
 		F0DEC0DE000000000000000E /* AnthropicSeedParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000000D /* AnthropicSeedParser.swift */; };
@@ -98,6 +103,10 @@
 		457791E911116B8F01C1FA1E /* TrackItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackItem.swift; sourceTree = "<group>"; };
 		53E86C9220E202A192DD65B8 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		7A1E9C4B3D5F608192A3B4C6 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		B2C3D4E5F60718293A4B5C07 /* FeedbackHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackHistoryView.swift; sourceTree = "<group>"; };
+		B2C3D4E5F60718293A4B5C01 /* Feedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Feedback.swift; sourceTree = "<group>"; };
+		B2C3D4E5F60718293A4B5C03 /* FeedbackStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackStore.swift; sourceTree = "<group>"; };
+		B2C3D4E5F60718293A4B5C05 /* MusicLibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicLibraryService.swift; sourceTree = "<group>"; };
 		56B28CDF4081492DAFE884CA /* PlaylistDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistDetailView.swift; sourceTree = "<group>"; };
 		5A607B8C47F286DDF37FC89B /* PlaylistService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistService.swift; sourceTree = "<group>"; };
 		618AA8EAA7057B298D7D3932 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -119,6 +128,7 @@
 		F0DEC0DE0000000000000003 /* ContentTypeFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentTypeFilter.swift; sourceTree = "<group>"; };
 		F0DEC0DE0000000000000005 /* PlaylistComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistComposer.swift; sourceTree = "<group>"; };
 		F0DEC0DE0000000000000007 /* ComposerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerTests.swift; sourceTree = "<group>"; };
+		B2C3D4E5F60718293A4B5C09 /* FeedbackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackTests.swift; sourceTree = "<group>"; };
 		F0DEC0DE0000000000000009 /* ContentTypeFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentTypeFilterTests.swift; sourceTree = "<group>"; };
 		F0DEC0DE000000000000000B /* SeedRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedRequest.swift; sourceTree = "<group>"; };
 		F0DEC0DE000000000000000D /* AnthropicSeedParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicSeedParser.swift; sourceTree = "<group>"; };
@@ -148,6 +158,7 @@
 				F0DEC0DE0000000000000013 /* SceneAndProfileTests.swift */,
 				F0DEC0DE000000000000001B /* PipelineTests.swift */,
 				F0DEC0DE0000000000000023 /* PromptTests.swift */,
+				B2C3D4E5F60718293A4B5C09 /* FeedbackTests.swift */,
 			);
 			path = SonglyTests;
 			sourceTree = "<group>";
@@ -216,6 +227,7 @@
 				F0DEC0DE000000000000000B /* SeedRequest.swift */,
 				F0DEC0DE0000000000000011 /* ListeningScene.swift */,
 				F0DEC0DE0000000000000015 /* TasteProfile.swift */,
+				B2C3D4E5F60718293A4B5C01 /* Feedback.swift */,
 				2E8D6E45EE067C6184AD9D74 /* UserPreferences.swift */,
 			);
 			path = Models;
@@ -239,6 +251,8 @@
 				F0DEC0DE0000000000000019 /* GapRoundPlanner.swift */,
 				F0DEC0DE000000000000001D /* AlbumTrackPicker.swift */,
 				F0DEC0DE000000000000001F /* CatalogResolver.swift */,
+				B2C3D4E5F60718293A4B5C05 /* MusicLibraryService.swift */,
+				B2C3D4E5F60718293A4B5C03 /* FeedbackStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -261,6 +275,7 @@
 				618AA8EAA7057B298D7D3932 /* SettingsView.swift */,
 				EE272DB5F1964FA9B7F11376 /* PlaylistHistoryView.swift */,
 				56B28CDF4081492DAFE884CA /* PlaylistDetailView.swift */,
+				B2C3D4E5F60718293A4B5C07 /* FeedbackHistoryView.swift */,
 				C954BF295A2B78306FB1FDD2 /* Components */,
 			);
 			path = Views;
@@ -436,6 +451,10 @@
 			files = (
 				5774CB032985AAEC82CBC5B9 /* AppConfig.swift in Sources */,
 				7A1E9C4B3D5F608192A3B4C5 /* Theme.swift in Sources */,
+				B2C3D4E5F60718293A4B5C06 /* FeedbackHistoryView.swift in Sources */,
+				B2C3D4E5F60718293A4B5C00 /* Feedback.swift in Sources */,
+				B2C3D4E5F60718293A4B5C02 /* FeedbackStore.swift in Sources */,
+				B2C3D4E5F60718293A4B5C04 /* MusicLibraryService.swift in Sources */,
 				F0DEC0DE0000000000000002 /* RecommendationSeed.swift in Sources */,
 				F0DEC0DE0000000000000004 /* ContentTypeFilter.swift in Sources */,
 				F0DEC0DE0000000000000006 /* PlaylistComposer.swift in Sources */,
@@ -481,6 +500,7 @@
 			files = (
 				71086B2C6EBE7BA659F1A17A /* SonglyTests.swift in Sources */,
 				F0DEC0DE0000000000000008 /* ComposerTests.swift in Sources */,
+				B2C3D4E5F60718293A4B5C08 /* FeedbackTests.swift in Sources */,
 				F0DEC0DE000000000000000A /* ContentTypeFilterTests.swift in Sources */,
 				F0DEC0DE0000000000000010 /* LLMContractTests.swift in Sources */,
 				F0DEC0DE0000000000000014 /* SceneAndProfileTests.swift in Sources */,

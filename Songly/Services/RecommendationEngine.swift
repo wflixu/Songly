@@ -224,14 +224,18 @@ actor RecommendationEngine {
         let recentlyPlayed = await recentlyPlayedTask ?? []
         let topPlayed = await topPlayedTask ?? []
 
-        // ---- Step 4: Scene + Profile + Exclusions ----
+        // ---- Step 4: Scene + Profile + Feedback + Exclusions ----
         // 风格模式下情境仍作为背景，只是优先级低于用户点名的风格。
         let scene = SceneContext.sensed()
         let profile = loadTasteProfile()
+        // 读一次反馈，同时供三层使用：硬排除（删掉的歌）、层内排序（艺人权重）、
+        // prompt（明确的好恶）。见 `FeedbackStore.Derived`。
+        let feedback = await deriveFeedback()
         let exclusions = await makeExclusions(
             songs: songs,
             recentlyPlayed: recentlyPlayed,
-            source: source
+            source: source,
+            feedback: feedback
         )
         let artistHeat = await recentArtistCounts(windowDays: AppConfig.artistRecencyWindowDays)
 
@@ -243,7 +247,7 @@ actor RecommendationEngine {
         // ---- Step 5: Round loop ----
         let seedTargets = PromptBuilderV3.seedTargets(for: AppConfig.targetTrackCount)
         var request = SeedRequest(
-            system: PromptBuilderV3.systemPrefix(profile: profile),
+            system: PromptBuilderV3.systemPrefix(profile: profile, feedback: feedback.summary),
             userMessage: PromptBuilderV3.firstUserMessage(
                 scene: scene,
                 now: startedAt,
@@ -264,7 +268,8 @@ actor RecommendationEngine {
         var songsByID: [String: Song] = [:]
         var composition = PlaylistComposer.compose(Self.composerInput(
             candidates: accumulated, exclusions: exclusions,
-            artistHeat: artistHeat, quickPick: quickPickStyle != nil
+            artistHeat: artistHeat, artistWeights: feedback.artistWeights,
+            quickPick: quickPickStyle != nil
         ))
 
         var round = 0
@@ -355,7 +360,8 @@ actor RecommendationEngine {
 
             composition = PlaylistComposer.compose(Self.composerInput(
                 candidates: accumulated, exclusions: exclusions,
-                artistHeat: artistHeat, quickPick: quickPickStyle != nil
+                artistHeat: artistHeat, artistWeights: feedback.artistWeights,
+                quickPick: quickPickStyle != nil
             ))
 
             let decision = GapRoundPlanner.decide(RoundState(
@@ -500,11 +506,13 @@ actor RecommendationEngine {
         candidates: [ResolvedCandidate],
         exclusions: PlaylistComposer.ExclusionSet,
         artistHeat: [String: Int],
+        artistWeights: [String: Int],
         quickPick: Bool
     ) -> PlaylistComposer.Input {
         var input = PlaylistComposer.Input(candidates: candidates)
         input.exclusions = exclusions
         input.recentArtistCounts = artistHeat
+        input.artistWeights = artistWeights
         // QuickPick：用户已点名风格，不再套 70/20/10。
         input.tierQuotaEnabled = !quickPick
         return input
@@ -561,7 +569,8 @@ actor RecommendationEngine {
     private func makeExclusions(
         songs: [Song],
         recentlyPlayed: [Song],
-        source: String
+        source: String,
+        feedback: FeedbackStore.Derived
     ) async -> PlaylistComposer.ExclusionSet {
         // 去重窗口是 source 感知的：daily 14 天、quick_pick 7 天，
         // 但**两者都进排除集合** —— 旧实现里 quick_pick 完全不参与去重，
@@ -580,8 +589,22 @@ actor RecommendationEngine {
             songIDs: dailyIDs.union(quickPickIDs),
             keys: Set(historyKeys),
             recentlyPlayedKeys: Set(recentlyPlayed.map(\.key)),
-            libraryKeys: Set(songs.map(\.key))
+            libraryKeys: Set(songs.map(\.key)),
+            // 用户明确删掉的歌。**与上面几项不同，它不受放宽阶梯影响** ——
+            // 用户说了不要，候选不够也不是把它塞回去的理由。
+            removedSongIDs: feedback.removedIDs,
+            removedKeys: feedback.removedKeys
         )
+    }
+
+    /// 读一次用户反馈，产出三层都要用的那一份派生结果。
+    ///
+    /// `FeedbackStore` 是 `@MainActor`（它要碰 `modelContainer.mainContext`），
+    /// 所以这里 hop 一次主线程拿结果 —— 与本文件其他 SwiftData 辅助函数的做法一致。
+    private func deriveFeedback() async -> FeedbackStore.Derived {
+        await MainActor.run {
+            FeedbackStore(context: modelContainer.mainContext).derive()
+        }
     }
 
     // MARK: - Logging

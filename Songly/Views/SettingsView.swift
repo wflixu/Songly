@@ -11,6 +11,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import MusicKit
 import UIKit
 
@@ -21,12 +22,22 @@ struct SettingsView: View {
     /// 画像存在 UserDefaults 里，读一次很便宜，不需要走依赖注入。
     private let profileStore = TasteProfileStore()
 
+    /// 仅探测用：拿最近一份歌单里的第一首歌当样本。
+    @Query(sort: \RecommendationRecord.date, order: .reverse)
+    private var records: [RecommendationRecord]
+
+    @State private var probeReport: String?
+
     var body: some View {
         NavigationStack {
             List {
                 tasteSection
+                feedbackSection
                 permissionSection
                 aboutSection
+                #if DEBUG
+                debugSection
+                #endif
             }
             .scrollContentBackground(.hidden)
             .navigationTitle("设置")
@@ -40,6 +51,26 @@ struct SettingsView: View {
         // 必须挂在 sheet 的**根**上；挂在 List 上不生效。
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+        .sheet(isPresented: Binding(
+            get: { probeReport != nil },
+            set: { if !$0 { probeReport = nil } }
+        )) {
+            probeSheet
+        }
+    }
+
+    // MARK: - 我的反馈
+
+    private var feedbackSection: some View {
+        Section {
+            NavigationLink {
+                FeedbackHistoryView()
+            } label: {
+                Label("我的反馈", systemImage: "hand.thumbsup")
+            }
+        } footer: {
+            Text("查看并撤销你对歌单和单曲的评价。删除过的歌不会再被推荐。")
+        }
     }
 
     // MARK: - AI 眼中的你
@@ -186,4 +217,50 @@ struct SettingsView: View {
             UIApplication.shared.open(url)
         }
     }
+
+    // MARK: - 调试（仅 DEBUG）
+
+    #if DEBUG
+    private var debugSection: some View {
+        Section {
+            Button("探测：写回评分") { runProbe() }
+        } header: {
+            Text("调试")
+        } footer: {
+            Text("验证三件事：MusicDataRequest 能否带 body 发 PUT、写端点用目录 ID 还是资料库 ID、请求体形状。结论决定 AppConfig.writeBackLovedRating 能不能打开。")
+        }
+    }
+
+    private var probeSheet: some View {
+        NavigationStack {
+            ScrollView {
+                Text(probeReport ?? "")
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            }
+            .navigationTitle("评分写回探测")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("关闭") { probeReport = nil }
+                }
+            }
+        }
+    }
+
+    private func runProbe() {
+        guard let songID = records.first?.tracks.first?.id else {
+            probeReport = "没有可用的曲目 ID —— 先在首页生成一份歌单。"
+            return
+        }
+        probeReport = "探测中…"
+        Task {
+            let report = await MusicLibraryService().probeRatingWrite(songID: songID)
+            probeReport = report
+            print(report)
+        }
+    }
+    #endif
 }

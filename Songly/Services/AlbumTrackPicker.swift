@@ -55,6 +55,10 @@ enum AlbumTrackPicker {
         allowLibrary: Bool
     ) -> Bool {
         if ContentTypeFilter.rejection(for: candidate) != nil { return false }
+        // 用户明确删掉的歌 —— 这一条在这道闸门里也**从不放宽**。
+        // 不在这里拦，被删的歌会白白占掉专辑的 `maxPerAlbum` 名额。
+        if exclusions.removedSongIDs.contains(candidate.info.id) { return false }
+        if exclusions.removedKeys.contains(candidate.info.key) { return false }
         if exclusions.songIDs.contains(candidate.info.id) { return false }
         if exclusions.keys.contains(candidate.info.key) { return false }
         if exclusions.recentlyPlayedKeys.contains(candidate.info.key) { return false }

@@ -60,7 +60,10 @@ enum PromptBuilderV3 {
     ///
     /// 顺序也有讲究：规则放在最后，因为它是最常被改动的部分 ——
     /// 追加改动只会失效规则那几个字节，不会动到前面那份昂贵的画像。
-    static func systemPrefix(profile: TasteProfile?) -> String {
+    static func systemPrefix(
+        profile: TasteProfile?,
+        feedback: FeedbackSummary? = nil
+    ) -> String {
         var sections: [String] = []
 
         sections.append("""
@@ -89,6 +92,18 @@ enum PromptBuilderV3 {
            有无空格都要对）。上面的收藏抽样里出现过的艺人，直接沿用那里的写法。
            写法不一致会导致曲库检索直接失败 —— 这是解析失败最常见的原因。
         """)
+
+        // ## 用户明确反馈 —— 追加在**最后**。
+        //
+        // 位置是有讲究的：DeepSeek 缓存的是最长公共前缀。反馈变化时，缓存只
+        // 在它这里断开，前面那份昂贵的画像和规则**仍然命中**。放到画像之前
+        // 会让每次反馈变动都白烧一次全量输入。
+        //
+        // 它与画像同属「这位用户是谁」的耐久事实，而不是「此刻」的情境 ——
+        // 所以进 system 而不是 messages[0]（后者内嵌 now 与 scene，跨天必冷）。
+        if let block = feedback?.promptBlock {
+            sections.append(block)
+        }
 
         return sections.joined(separator: "\n\n")
     }

@@ -86,4 +86,17 @@ enum AppConfig {
     // MARK: - Background Task
 
     static let bgTaskIdentifier = "cn.wflixu.Songly.dailyRecommendation"
+
+    // MARK: - 反馈
+
+    /// 「超赞」是否把**喜欢评分**写回 Apple Music。
+    ///
+    /// 默认 **false**，因为这条路还没被证实：MusicKit 的 Swift API 完全不提供
+    /// 评分读写（`rating`/`favorite`/`love` 零命中），写回只能手写 REST，而且
+    /// 端点用目录 ID 还是资料库 ID 尚未在真机上探测过。
+    ///
+    /// 先在真机跑 `MusicLibraryService.probeRatingWrite(songID:)`，拿到结论再决定
+    /// 要不要打开 —— 而不是留一个假装在工作、实际一直失败的功能。
+    /// 「收藏进资料库」那一步不在此开关之下，它已经确认可用。
+    static let writeBackLovedRating = false
 }

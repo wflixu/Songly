@@ -44,6 +44,16 @@ final class RecommendationRecord {
     /// `SceneBrief.brief(for:isWeekend:)` 从 scene + 日期纯函数派生，
     /// 存一份副本只会多一处可能不一致的地方。旧记录为 nil。
     var scene: String? = nil
+    /// 用户对这份歌单的判断（`PlaylistRating.rawValue`：很准 / 一般 / 不准）。
+    /// 旧记录为 nil。与 `scene` 同一套路：存字符串 + 计算属性解析，
+    /// 不让 SwiftData 直接持有枚举。
+    var rating: String? = nil
+    /// 被用户删掉的曲目数。
+    ///
+    /// `songCount` 的语义是**当前**曲目数（删除时递减），所以这个字段保留
+    /// 差值，供详情页那行「N 首已移除（Apple Music 中的歌单不变）」使用。
+    /// 旧记录为 0。
+    var removedCount: Int = 0
 
     // MARK: - Computed: TrackInfo
 
@@ -70,6 +80,20 @@ final class RecommendationRecord {
     /// 便捷: 艺人名列表。
     var artistNames: [String] { tracks.map(\.artist) }
 
+    // MARK: - Computed: 反馈
+
+    /// 用户删掉的曲目**不在**这里面。
+    ///
+    /// **所有展示路径都必须走它** —— 封面拼贴、层级配比、曲目列表、歌单行封面。
+    /// 漏掉任何一处，就会出现「拼贴里还有那首歌、列表里却没有」的错位。
+    var visibleTracks: [TrackInfo] {
+        tracks.filter { $0.verdict != .removed }
+    }
+
+    var ratingValue: PlaylistRating? {
+        rating.flatMap(PlaylistRating.init(rawValue:))
+    }
+
     // MARK: - Computed: 展示
 
     /// 给人看的歌单标题。
@@ -93,7 +117,8 @@ final class RecommendationRecord {
     /// 卡片相应地不显示这一行。
     var tierCounts: [DiscoveryTier: Int] {
         var counts: [DiscoveryTier: Int] = [:]
-        for track in tracks {
+        // 读 visibleTracks：删掉一首「新鲜」之后，配比本来就该跟着变。
+        for track in visibleTracks {
             guard let tier = track.tier else { continue }
             counts[tier, default: 0] += 1
         }
@@ -126,7 +151,9 @@ final class RecommendationRecord {
         status: String = RecommendationRecord.statusPending,
         playlistID: String? = nil,
         playlistURL: URL? = nil,
-        scene: String? = nil
+        scene: String? = nil,
+        rating: String? = nil,
+        removedCount: Int = 0
     ) {
         self.date = date
         self.strategy = strategy
@@ -143,5 +170,7 @@ final class RecommendationRecord {
         self.playlistID = playlistID
         self.playlistURL = playlistURL
         self.scene = scene
+        self.rating = rating
+        self.removedCount = removedCount
     }
 }

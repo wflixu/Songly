@@ -35,6 +35,14 @@ struct TrackInfo: Codable, Equatable, Sendable {
     /// 这首歌在 Apple Music 里的规范链接（`Song.url`）。点一行跳过去要用它 ——
     /// 没有它，曲目行要么不可点、要么只能退化成打开 Music App 首页。
     var url: String? = nil
+
+    /// 用户对这首歌的判定（`.loved` / `.removed`）。`nil` = 未表态。
+    ///
+    /// 同样必须是 `var` + 默认值，理由见上面 `artworkURL` 的注释。
+    /// 判定刻意存在 `tracksJSON` 里而**不是**另建一张表：不用碰 SwiftData
+    /// schema（迁移风险直接消失），而且「撤销删除」天然可行 —— 把这个字段
+    /// 清掉，歌就回到列表里，不必记住它原本属于哪份歌单。
+    var verdict: TrackVerdict? = nil
 }
 
 // MARK: - TrackItem (LLM response)

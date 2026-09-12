@@ -18,7 +18,7 @@ struct PlaylistRow: View {
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
             ArtworkThumbnail(
-                urlString: record.tracks.first?.artworkURL,
+                urlString: record.visibleTracks.first?.artworkURL,
                 side: Theme.Size.playlistArtwork,
                 radius: Theme.Radius.tile
             )

@@ -221,7 +221,7 @@ struct TodayCard: View {
     private var completedBody: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             HStack(spacing: Theme.Spacing.md) {
-                ArtworkMosaic(tracks: record?.tracks ?? [])
+                ArtworkMosaic(tracks: record?.visibleTracks ?? [])
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(record?.displayTitle ?? fallbackName)

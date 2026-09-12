@@ -21,8 +21,7 @@ struct SonglyApp: App {
 
     init() {
         let schema = Schema([RecommendationRecord.self, UserPreferences.self])
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-        let container = try! ModelContainer(for: schema, configurations: [config])
+        let container = Self.makeContainer(schema: schema)
         self.modelContainer = container
 
         // 同一个 MusicKitService 实例同时供取数和目录解析使用。
@@ -59,6 +58,66 @@ struct SonglyApp: App {
                 ContentView(homeVM: homeVM)
                     .modelContainer(modelContainer)
             }
+        }
+    }
+
+    // MARK: - 建库（带迁移兜底）
+
+    /// 建容器：失败时**隔离旧库并重试**，最后兜底用内存库。**绝不静默删用户数据。**
+    ///
+    /// 原来这里是 `try!` —— 一次加性迁移失败就等于**启动即崩，而且循环崩**，
+    /// 用户除了删掉 App 重装没有任何出路。
+    ///
+    /// 歌单本体其实在用户的 Apple Music 账号里（那是 `MusicLibrary` 建的），本地
+    /// 库只是镜像，重置并不真的丢歌单。但这不该成为悄悄清库的理由：隔离副本让
+    /// 问题可修，也让我们能如实告诉用户发生了什么。
+    private static func makeContainer(schema: Schema) -> ModelContainer {
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+
+        do {
+            return try ModelContainer(for: schema, configurations: [config])
+        } catch {
+            print("[Songly] 数据迁移失败，准备隔离旧库：\(error.localizedDescription)")
+        }
+
+        quarantineStore(at: config.url)
+
+        do {
+            return try ModelContainer(for: schema, configurations: [config])
+        } catch {
+            print("[Songly] 隔离后重建仍失败，退回内存库：\(error.localizedDescription)")
+        }
+
+        // 最后兜底。container 全程依赖注入（HomeViewModel / RecommendationEngine），
+        // 所以推荐管线照常工作，只是不持久化 —— 比开不了 App 好得多。
+        return try! ModelContainer(
+            for: schema,
+            configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)]
+        )
+    }
+
+    /// 把默认 store 的三个文件挪到 `Backups/<时间戳>/` 下，而不是删掉。
+    private static func quarantineStore(at url: URL) {
+        let fileManager = FileManager.default
+        let stamp = ISO8601DateFormatter().string(from: Date())
+            .replacingOccurrences(of: ":", with: "-")
+        let backupDirectory = url.deletingLastPathComponent()
+            .appendingPathComponent("Backups", isDirectory: true)
+            .appendingPathComponent(stamp, isDirectory: true)
+
+        do {
+            try fileManager.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
+            for suffix in ["", "-shm", "-wal"] {
+                let source = URL(fileURLWithPath: url.path + suffix)
+                guard fileManager.fileExists(atPath: source.path) else { continue }
+                try fileManager.moveItem(
+                    at: source,
+                    to: backupDirectory.appendingPathComponent(source.lastPathComponent)
+                )
+            }
+            print("[Songly] 旧库已隔离到 \(backupDirectory.path)")
+        } catch {
+            print("[Songly] 隔离旧库失败：\(error.localizedDescription)")
         }
     }
 }

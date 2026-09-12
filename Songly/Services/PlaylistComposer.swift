@@ -23,6 +23,14 @@ enum PlaylistComposer {
         var keys: Set<TrackKey> = []
         var recentlyPlayedKeys: Set<TrackKey> = []
         var libraryKeys: Set<TrackKey> = []
+
+        /// 用户明确删掉的歌。
+        ///
+        /// **任何放宽路径都不放过** —— 与 `maxPerArtist` 同一性质：它是刚性的
+        /// 用户意志，不是 `Relaxation` 上可以逐级打开的一档。用户说了不要，
+        /// 系统就没有任何理由在候选不够时又把它塞回去。
+        var removedSongIDs: Set<String> = []
+        var removedKeys: Set<TrackKey> = []
     }
 
     /// 允许放宽哪些排除项。三级递进，只在候选不足时逐级启用。
@@ -69,6 +77,8 @@ enum PlaylistComposer {
         case inLibrary
         case contentType(ContentRejection)
         case artistCapped
+        /// 用户在这份歌单里明确删掉的歌。**永不选回**。
+        case userRemoved
         /// 通过全部过滤，但配额已满 / 被硬截断挡下。
         case notSelected
 
@@ -82,6 +92,7 @@ enum PlaylistComposer {
             case .inLibrary: return "in_library"
             case .contentType(let reason): return "content_\(reason.rawValue)"
             case .artistCapped: return "artist_capped"
+            case .userRemoved: return "user_removed"
             case .notSelected: return "quota_full"
             }
         }
@@ -107,6 +118,12 @@ enum PlaylistComposer {
         /// 主艺人 → 最近 N 天的出现次数。层内排序靠前，这是"每天都是同几个艺人"
         /// 的真正解药 —— 单次歌单内的上限治不了跨天重复。
         var recentArtistCounts: [String: Int] = [:]
+        /// 主艺人 → 用户反馈权重（超赞为正、删除为负）。
+        ///
+        /// ⚠️ 这**只是层内排序**，挡不住任何东西：`takeNext` 会把整条队列走完，
+        /// 所以只要那一层候选不够，被降权的艺人照样会被选中。真正"不再出现"
+        /// 靠的是 `ExclusionSet.removedSongIDs`，不是这里。
+        var artistWeights: [String: Int] = [:]
         /// 稳定随机种子（由 `yyyyMMdd + scene` 派生）。注入以便测试。
         var randomSeed: UInt64 = 0
     }
@@ -210,6 +227,15 @@ enum PlaylistComposer {
             // S4：内容类型过滤（先于配额 —— 被拒的曲目不该占用配额名额）。
             if let reason = ContentTypeFilter.rejection(for: candidate) {
                 rejections.append(Rejection(info: info, reason: .contentType(reason)))
+                continue
+            }
+
+            // S3a：用户明确删掉的歌。**放在其他排除检查之前** —— 归因才会落到
+            // 「用户删的」而不是容易被误读成「14 天内推过」。
+            // 这一条**不受 `relaxation` 影响**，见 `ExclusionSet.removedSongIDs`。
+            if input.exclusions.removedSongIDs.contains(info.id)
+                || input.exclusions.removedKeys.contains(info.key) {
+                rejections.append(Rejection(info: info, reason: .userRemoved))
                 continue
             }
 
@@ -350,6 +376,14 @@ enum PlaylistComposer {
         let inLibrary = input.exclusions.libraryKeys.contains(candidate.info.key) ? 1 : 0
         let recentlyPlayed = input.exclusions.recentlyPlayedKeys.contains(candidate.info.key) ? 1 : 0
         let artistHeat = input.recentArtistCounts[candidate.primaryArtist] ?? 0
-        return [inLibrary, recentlyPlayed, artistHeat, candidate.seedRank, candidate.isCompilation ? 1 : 0]
+        // 反馈权重**取负**：`lexicographicallyPrecedes` 是升序比较，所以
+        // 「超赞过的艺人」（正权重）要变小才会排到前面。
+        //
+        // 放在 `artistHeat` **之前**：用户明确表过态的偏好，应当强于「最近 7 天
+        // 出现过几次」。但排在 `inLibrary`/`recentlyPlayed` 之后 —— 那两条是
+        // 「这些是回填候选」的标记，必须永远垫底（见上面的排序键说明）。
+        let affinity = -(input.artistWeights[candidate.primaryArtist] ?? 0)
+        return [inLibrary, recentlyPlayed, affinity, artistHeat,
+                candidate.seedRank, candidate.isCompilation ? 1 : 0]
     }
 }
