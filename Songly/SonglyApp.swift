@@ -24,11 +24,20 @@ struct SonglyApp: App {
         let container = Self.makeContainer(schema: schema)
         self.modelContainer = container
 
+        // 一把凭据、一个客户端。
+        //
+        // 原先这里 `LLMService()` 被造了两次（引擎一个、画像刷新器一个），
+        // 两个实例各持一份构造时的 Key 快照 —— 于是「在设置页改了 Key」这件事
+        // 对其中一条链路必然不生效。现在它们共享同一个 store，而且 `LLMService`
+        // 本身无状态（每次请求才向 store 求值），所以三处共用一个实例是安全的。
+        let keyStore = KeychainAPIKeyStore()
+        let llm = LLMService(keyStore: keyStore)
+
         // 同一个 MusicKitService 实例同时供取数和目录解析使用。
         let musicKit = MusicKitService()
         let engine = RecommendationEngine(
             musicKitService: musicKit,
-            llmService: LLMService(),
+            llmService: llm,
             playlistService: PlaylistService(),
             catalogResolver: CatalogResolver(musicKit: musicKit),
             modelContainer: container
@@ -47,7 +56,11 @@ struct SonglyApp: App {
             modelContainer: container,
             backgroundService: background,
             // 画像的生成放在前台，推荐流程永远只用算好的画像。
-            profileRefresher: TasteProfileRefresher(musicKit: MusicKitService(), llm: LLMService())
+            profileRefresher: TasteProfileRefresher(musicKit: MusicKitService(), llm: llm),
+            // 设置页的 Key 校验走同一个客户端；keyStore 与 llm 共用同一个实例，
+            // 所以「UI 写进去的」和「服务读出来的」必然是同一份凭据。
+            llmService: llm,
+            keyStore: keyStore
         )
     }
 

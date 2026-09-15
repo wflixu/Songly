@@ -66,7 +66,7 @@
 | ADR-3 | **SwiftData 持久化** | Apple 官方推荐，原生 Swift 宏支持，与 SwiftUI 深度集成 | Core Data, Realm, UserDefaults |
 | ADR-4 | **DeepSeek API 直连** | 国内可用、延迟低、成本极低（¥0.001/1K tokens） | 通义千问、月之暗面 |
 | ADR-5 | **直接管理 Xcode 项目** | 简单直接，单人项目无需额外工具，避免 XcodeGen 配置同步问题 | XcodeGen, Tuist |
-| ADR-6 | **API Key 通过 .xcconfig 注入** | 防止 git 误提交（开发卫生措施，非安全措施——Key 仍可被 IPA 二进制提取，MVP 接受此风险） | 环境变量, Keychain 读取 |
+| ADR-6 | ~~**API Key 通过 .xcconfig 注入**~~ → **改由用户在设置页提供，存 Keychain** | **已推翻（2026-09）**。原方案在构建期把开发者的 Key 打进 bundle，并用 `INFOPLIST_KEY_` 写进 Release 的 Info.plist（可被 `strings` 提取）；且 `ENABLE_USER_SCRIPT_SANDBOXING` 下生成 `api_config.json` 的脚本阶段没有声明 inputs/outputs，干净构建直接失败。现改为运行时由用户填写、存 Keychain。推翻理由：ADR-6 当初的前提是「面向大众消费者发布、不能要求用户自备 Key」，而现阶段实际使用者是开发者本人，开发卫生优先于获客门槛 | 环境变量（已否决） |
 | ADR-7 | **纯 `actor` 编排引擎** | Swift 6 并发安全，天然序列化管线执行，防止并发触发 | `@Observable` 引擎（职责不清）, `OSAllocatedUnfairLock` |
 
 ---
@@ -80,7 +80,7 @@ Songly/
 ├── SonglyApp.swift                  # @main 入口，注入依赖
 ├── App/
 │   ├── AppConfig.swift              # 全局配置常量
-│   └── AppEnvironment.swift         # 环境值（API Key 等，使用 INFOPLIST_KEY_ 前缀）
+│   └── （AppEnvironment.swift 已删除 —— Key 改由设置页提供，见 8.1）
 │
 ├── Models/
 │   ├── RecommendationRecord.swift   # SwiftData: 推荐记录
@@ -1015,33 +1015,38 @@ final class BackgroundTaskService {
 
 ### 8.1 API Key 管理
 
+**当前方案（2026-09 起）：用户在设置页提供，存 Keychain。**
+
+```swift
+// 存储：Services/APIKeyStore.swift
+struct KeychainAPIKeyStore: APIKeyStoring { ... }
+// kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly：
+//   AfterFirstUnlock —— 后台任务（BGTaskScheduler）在锁屏时也要能读到
+//   ThisDeviceOnly   —— 不同步 iCloud 钥匙串、不进加密备份
+
+// 读取：每次请求时求值，不在 init 时快照
+private var activeAPIKey: String { APIKeyPolicy.normalize(keyStore.load() ?? "") }
+var isAPIKeyConfigured: Bool { APIKeyPolicy.isUsable(activeAPIKey) }
 ```
-# .xcconfig（gitignored — 仅防止 git 误提交）
-DEEPSEEK_API_KEY = sk-xxxxxxxxxxxxxxxx
 
-# 使用 INFOPLIST_KEY_ 前缀让 Xcode 自动注入 Info.plist
-INFOPLIST_KEY_DEEPSEEK_API_KEY = $(DEEPSEEK_API_KEY)
+Key 由用户自备（BYOK）。这推翻了 ADR-6 —— 详见该条决策记录。
 
-# Swift 读取
-enum AppEnvironment {
-    static var deepseekAPIKey: String {
-        Bundle.main.infoDictionary?["DEEPSEEK_API_KEY"] as? String ?? ""
-    }
-}
-```
+**为什么不能退回构建期注入：**
 
-**⚠️ 已知风险（MVP 接受）：**
-- API Key 通过 `INFOPLIST_KEY_` 前缀注入 Info.plist → 编译进 IPA 二进制包
-- 任何人获取 IPA 文件后，可通过 `strings` 命令提取：
-  ```
-  strings Songly.app/Songly | grep "sk-"
-  ```
-- `.xcconfig` 仅防止 git 误提交，**不是安全措施**——它是开发卫生习惯
-- **MVP 缓解措施：**
-  1. DeepSeek 控制台设置消费限额（如 50 元/月），即使 Key 泄露损失可控
-  2. 为 App 使用独立 API Key（不是开发者主 Key），泄露后可单独轮换
-  3. 每用户年成本 ~¥0.5，攻击者刷 Key 的边际收益极低
-- **Phase 2 根本解决：** 引入后端代理，Key 只存于服务端，客户端通过匿名认证访问
+- 构建期注入意味着**开发者的** Key 进 bundle，而 BYOK 下每个用户应当用自己的
+- 旧方案用 `INFOPLIST_KEY_DEEPSEEK_API_KEY` 把 Key 写进 Release 的 Info.plist，
+  `strings Songly.app/Songly | grep "sk-"` 即可提取
+- 生成 `api_config.json` 的脚本阶段在 `ENABLE_USER_SCRIPT_SANDBOXING = YES` 下
+  没有声明 `inputPaths` / `outputPaths`，沙箱会同时拒掉读 `api_key.env` 与写
+  `api_config.json` —— 干净构建直接失败
+
+**剩余风险：**
+
+- Key 明文存在设备钥匙串里。设备被越狱、或用户主动导出，仍可读出
+- 用户可能把失效/共享的 Key 填进来。设置页保存后会做一次连通性探测并给出
+  具体原因（401 无效 / 402 余额不足 / 网络异常单独提示）
+- **Phase 2 若要走商业化：** 回到内置 Key + 服务端代理，Key 只存于服务端，
+  客户端通过匿名认证访问。届时 ADR-6 会被再次推翻——那时它的前提重新成立
 
 ### 8.2 数据隐私
 
@@ -1050,7 +1055,7 @@ enum AppEnvironment {
 | 收藏歌曲数据 | SwiftData（本地） | 仅构建 prompt 时发送给 LLM API（仅歌名+艺人名） |
 | 推荐历史 | SwiftData（本地） | 不上传 |
 | 用户 Apple ID | 不存储 | 不上传 |
-| API Key | .xcconfig（本地）→ IPA 内嵌 | 仅作为 HTTP Authorization Header |
+| API Key | 用户设置页输入 → Keychain（本机） | 仅作为 HTTP `x-api-key` header 传输 |
 
 - MusicKit 返回的 `Song` 不含用户 Apple ID 或邮箱
 - 发送给 LLM 的 prompt 仅含歌名+艺人名，不含任何用户标识
@@ -1153,7 +1158,7 @@ final class MockPlaylistService: PlaylistServiceProtocol { ... }
 
 | 问题 | 影响 | Phase 2 计划 |
 |------|------|-------------|
-| API Key 可被 IPA 提取 | 泄露后消费被盗（但金额极小） | 引入后端代理 API |
+| ~~API Key 可被 IPA 提取~~ **已解决** | 旧方案把开发者的 Key 写进 Release 的 Info.plist；现改为用户自备、存本机 Keychain，IPA 里不再含任何凭据 | 商业化时回到后端代理 |
 | 歌单累积无清理 | 30 天 = 30 份歌单，365 天 = 365 份 | 自动清理 30 天前的歌单 / 追加到滚动周歌单 |
 | 后台管线频繁被系统 kill | 用户需打开 App 才能触发推荐 | 后台拆分：仅 LLM 调用 → 存结果 → 前台补搜索 |
 | 并行数组已修复为 JSON 存储 | — | — |

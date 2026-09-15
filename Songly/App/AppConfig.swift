@@ -20,6 +20,16 @@ enum AppConfig {
     static let maxRetries = 3
     static let retryDelays: [TimeInterval] = [1, 2, 4]
 
+    // MARK: - API Key 校验（设置页）
+
+    /// 校验 Key 的单次超时。**刻意远短于 `requestTimeout`** —— 用户在设置页
+    /// 点「保存」后等的是一个「行/不行」的结论，不是一次生成。让他为这个答案
+    /// 盯 60 秒转圈，还不如不给这个反馈。
+    static let keyProbeTimeout: TimeInterval = 10
+
+    /// 探测请求的输出上限。只需要服务端回一个状态码，回复内容丢不丢都无所谓。
+    static let keyProbeMaxTokens = 16
+
     /// 单次响应上限。旧值 1000 是「歌单长度不稳定」的直接原因之一 ——
     /// 它天然只够 25–40 行歌名。上限实际是 384K，非思考模式默认 8K。
     static let llmMaxOutputTokens = 8000

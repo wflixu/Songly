@@ -18,6 +18,14 @@ extension Notification.Name {
     /// `PlaylistHistoryView` 用 `@Query` 驱动，会自动更新；而首页的
     /// `recentRecords` 是手动 fetch 的，需要这声通知才不会留下一行幽灵。
     static let recommendationRecordDeleted = Notification.Name("cn.wflixu.Songly.recommendationRecordDeleted")
+
+    /// Posted when the taste-profile refresh fails, so the settings page can say
+    /// why the profile stopped updating.
+    ///
+    /// 原先这条路径在 Release 下只剩下一个 `#if DEBUG` 的 print：一个 Key 失效的
+    /// 用户只会发现「口味画像永远停在某一版」，而设置页显示的是「已配置」——
+    /// 他没有任何线索能把这两件事联系起来。
+    static let tasteProfileRefreshFailed = Notification.Name("cn.wflixu.Songly.tasteProfileRefreshFailed")
 }
 
 @MainActor

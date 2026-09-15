@@ -58,20 +58,39 @@ struct HomeView: View {
     private var content: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.xl) {
-                TodayCard(
-                    state: vm.state,
-                    record: vm.todayRecord,
-                    canTrigger: vm.canTrigger,
-                    isOffline: vm.isOffline,
-                    actions: TodayCard.Actions(
-                        generate: vm.triggerDailyRecommendation,
-                        regenerate: vm.forceRegenerate,
-                        openInMusic: openInMusic,
-                        cancel: vm.cancelGeneration
-                    )
-                )
+                // 没配 Key 时整个推荐管线都跑不起来（引擎第 1 轮就抛
+                // `apiKeyNotConfigured`），所以这里换掉 hero 槽位，而不是等用户
+                // 点了生成再看一张错误卡。
+                //
+                // 用 `Group` 包住分支才能把 `.padding` 施加在分支结果上 ——
+                // 直接给 if/else 挂修饰符不编译。
+                //
+                // 只换这一处、不动 `body` 里那个 `authStatus` switch：授权与 Key
+                // 是两个正交的先决条件，挤进同一个 switch 就必须回答「Music 被拒
+                // + 没 Key 该显示哪个」，而任何答案都会让用户白跑一趟。
+                Group {
+                    if vm.isAPIKeyConfigured {
+                        TodayCard(
+                            state: vm.state,
+                            record: vm.todayRecord,
+                            canTrigger: vm.canTrigger,
+                            isOffline: vm.isOffline,
+                            actions: TodayCard.Actions(
+                                generate: vm.triggerDailyRecommendation,
+                                regenerate: vm.forceRegenerate,
+                                openInMusic: openInMusic,
+                                cancel: vm.cancelGeneration
+                            )
+                        )
+                    } else {
+                        APIKeySetupCard { vm.showSettings = true }
+                    }
+                }
                 .padding(.horizontal, Theme.Spacing.page)
 
+                // `styleSection` / `recentSection` 都保留：历史上生成的歌单不该
+                // 因为换了个 Key 就消失，而 `StyleChips(isEnabled: vm.canTrigger)`
+                // 会因为 `canTrigger` 多了一个条件自动置灰，零改动。
                 styleSection
                 recentSection
             }
@@ -146,6 +165,46 @@ struct HomeView: View {
         let url = vm.todayRecord?.playlistURL ?? URL(string: "music://")
         guard let url else { return }
         UIApplication.shared.open(url)
+    }
+}
+
+// MARK: - 未配置 API Key
+
+/// 「还没填 Key」的 hero 卡。
+///
+/// 视觉上照抄 `TodayCard.idleCard` 的骨架（同一块 `Theme.brandGradient`、
+/// 同一个圆角、同一颗胶囊按钮）—— 它们是同一张 hero 卡的两个面孔，
+/// 读起来应该是「这张卡还没有内容」，而不是「换了一个 App」。
+private struct APIKeySetupCard: View {
+    let onConfigure: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Label("先配置 DeepSeek API Key", systemImage: "key.fill")
+                    .font(.title3.weight(.semibold))
+
+                Text("乐遇用你自己的 API Key 生成推荐。Key 只保存在这台设备的钥匙串里，不会上传。")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.onBrandSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Button(action: onConfigure) {
+                Label("去设置", systemImage: "gearshape")
+                    .font(.headline)
+                    .foregroundStyle(Theme.brand)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: Theme.Size.primaryButton)
+                    .background(Theme.onBrand, in: Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .foregroundStyle(Theme.onBrand)
+        .padding(Theme.Spacing.xl)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.brandGradient)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
     }
 }
 

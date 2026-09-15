@@ -28,9 +28,35 @@ struct SettingsView: View {
 
     @State private var probeReport: String?
 
+    // MARK: - API Key 输入状态
+
+    /// 用户正在打、但还没保存的内容。
+    ///
+    /// **刻意不回填已存的 Key。** 回填意味着每次打开 sheet 都要把明文凭据读进
+    /// 视图状态、一直活到 sheet 关闭 —— 截屏、内存里都是它；而且会制造一个歧义：
+    /// 「字段里有内容」到底是「已配置的 Key」还是「用户刚改的草稿」？
+    /// 留空字段 + 状态行是 iOS 上 token 字段的惯例：要换就输新的点保存，
+    /// 要删就点清除。
+    @State private var draftKey = ""
+    @State private var keyCheck: KeyCheck = .idle
+    @State private var showClearConfirm = false
+    /// 「更换」是否已展开输入框。**已配置时默认收起** —— 见 `showsInput`。
+    @State private var isChangingKey = false
+
+    /// 保存后那次连通性探测的结果。
+    ///
+    /// `.failed` 承载的文案由调用方拼好 —— 「存不上」和「存上了但验不了」
+    /// 是两件事，合并成一句会让用户误解自己该做什么。
+    private enum KeyCheck: Equatable {
+        case idle, checking, ok, invalid, noBalance, failed(String)
+    }
+
     var body: some View {
         NavigationStack {
             List {
+                // 放第一个：其余五个 section 都是**信息展示**，只有它是**可操作的**；
+                // 而 `.medium` detent 下用户一进来就该看见它，不用滚动。
+                apiKeySection
                 tasteSection
                 feedbackSection
                 permissionSection
@@ -51,11 +77,188 @@ struct SettingsView: View {
         // 必须挂在 sheet 的**根**上；挂在 List 上不生效。
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+        // 必须与 `probeSheet` / `debugSection` 的 `#if DEBUG` 同步。
+        // 原先这里没有包裹，于是 **Release 构建一直编译不过**（`cannot find
+        // 'probeSheet' in scope`）—— 只跑 Debug 的话完全看不到。
+        #if DEBUG
         .sheet(isPresented: Binding(
             get: { probeReport != nil },
             set: { if !$0 { probeReport = nil } }
         )) {
             probeSheet
+        }
+        #endif
+    }
+
+    // MARK: - DeepSeek API Key
+
+    /// 要不要显示输入框。
+    ///
+    /// 没配过 → 必须显示（否则无从下手）；配过了 → 只在用户主动点「更换」时展开。
+    private var showsInput: Bool { !vm.isAPIKeyConfigured || isChangingKey }
+
+    private var statusBadge: some View {
+        Group {
+            if vm.isAPIKeyConfigured {
+                Label("已保存", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            } else {
+                Text("未配置")
+                    .foregroundStyle(.orange)
+            }
+        }
+        .font(.subheadline)
+    }
+
+    private var apiKeySection: some View {
+        Section {
+            HStack {
+                Image(systemName: "key.fill")
+                    .foregroundStyle(Theme.brand)
+                Text("DeepSeek API Key")
+                Spacer()
+                statusBadge
+            }
+
+            // **已配置且不在更换中时，整个输入区收起。**
+            //
+            // 原实现把 SecureField 一直摆在那儿（因为刻意不回填已存的 Key），
+            // 结果每次进设置都像在说「请再输一遍」—— 用户会怀疑到底存没存上。
+            // 收起之后，没有输入框本身就是「已经存好了」最直接的表达，
+            // 而「更换」按钮保留了改 Key 的出路。
+            if !showsInput {
+                HStack {
+                    Button("更换") { beginChanging() }
+                    Spacer()
+                    Button("清除", role: .destructive) { showClearConfirm = true }
+                }
+            } else {
+                SecureField("sk-…", text: $draftKey)
+                    .font(.system(.footnote, design: .monospaced))
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    // 挡住密码自动填充往这里塞东西，也让这个字段参与截屏保护。
+                    .textContentType(.password)
+                    .privacySensitive()
+                    .onSubmit(save)
+
+                HStack {
+                    Button("保存", action: save)
+                        .disabled(!APIKeyPolicy.isUsable(draftKey) || keyCheck == .checking)
+
+                    Spacer()
+
+                    // 已经存过一把时，更换动作要能反悔 —— 否则点开「更换」
+                    // 就只能一路填到底，连退出的路都没有。
+                    if vm.isAPIKeyConfigured {
+                        Button("取消") { cancelChanging() }
+                    }
+                }
+            }
+        } header: {
+            Text("DeepSeek")
+        } footer: {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("乐遇用你自己的 DeepSeek API Key 生成推荐。Key 只保存在本机的钥匙串里，不会上传到任何服务器。")
+                keyStatusLine
+                if let error = vm.profileRefreshError {
+                    Label("口味画像生成失败：\(error)", systemImage: "exclamationmark.circle.fill")
+                        .foregroundStyle(.orange)
+                }
+            }
+        }
+        .confirmationDialog("清除 API Key？", isPresented: $showClearConfirm, titleVisibility: .visible) {
+            Button("清除", role: .destructive, action: clear)
+        } message: {
+            Text("清除后需要重新填写才能生成歌单。")
+        }
+    }
+
+    @ViewBuilder
+    private var keyStatusLine: some View {
+        switch keyCheck {
+        case .idle:
+            EmptyView()
+        case .checking:
+            Label("正在验证…", systemImage: "ellipsis.circle")
+        case .ok:
+            Label("Key 有效", systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        case .invalid:
+            Label("这把 Key 无效或已过期", systemImage: "xmark.circle.fill")
+                .foregroundStyle(.red)
+        case .noBalance:
+            Label("Key 有效，但账户余额不足", systemImage: "xmark.circle.fill")
+                .foregroundStyle(.orange)
+        case .failed(let message):
+            Label(message, systemImage: "exclamationmark.circle")
+                .foregroundStyle(.orange)
+        }
+    }
+
+    /// 保存 = **先落盘、后联网**。
+    ///
+    /// 顺序不能反：离线时 Key 也必须存得下来。校验只是**追加**一句结论，
+    /// 它失败不影响保存已经成功这个事实。
+    private func save() {
+        do {
+            try vm.saveAPIKey(draftKey)
+        } catch {
+            keyCheck = .failed("保存失败：\(error.localizedDescription)")
+            return
+        }
+        draftKey = ""
+        // 落盘成功就把输入区收起来 —— 用户看到的不再是「一个等着被填的空框」，
+        // 而是「已保存」加一条验证结论。这正是「别再让我输一遍」的修法。
+        isChangingKey = false
+        keyCheck = .checking
+
+        Task {
+            do {
+                try await vm.verifyAPIKey()
+                keyCheck = .ok
+            } catch let error as LLMServiceError {
+                keyCheck = Self.map(error)
+            } catch {
+                // 网络异常不是 Key 的问题。用户在地铁里保存，Key 是好的，
+                // 不能吓唬他 —— 所以文案明确说「已保存」。
+                keyCheck = .failed("已保存，但暂时无法验证：\(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func clear() {
+        do {
+            try vm.clearAPIKey()
+            draftKey = ""
+            keyCheck = .idle
+            isChangingKey = false
+        } catch {
+            keyCheck = .failed("清除失败：\(error.localizedDescription)")
+        }
+    }
+
+    private func beginChanging() {
+        draftKey = ""
+        keyCheck = .idle
+        isChangingKey = true
+    }
+
+    private func cancelChanging() {
+        draftKey = ""
+        keyCheck = .idle
+        isChangingKey = false
+    }
+
+    /// 状态码映射是这次校验的全部价值所在 —— 只说「失败」等于没说。
+    private static func map(_ error: LLMServiceError) -> KeyCheck {
+        guard case .httpError(let code, _) = error else {
+            return .failed("已保存，但验证失败：\(error.localizedDescription)")
+        }
+        switch code {
+        case 401: return .invalid
+        case 402: return .noBalance
+        default: return .failed("已保存，但验证失败（HTTP \(code)）")
         }
     }
 

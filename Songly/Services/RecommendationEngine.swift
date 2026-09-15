@@ -308,8 +308,10 @@ actor RecommendationEngine {
                     stopReason = .cancelled
                     break
                 }
-                // 第 1 轮失败就没有退路；补位轮失败则保留已有成果收工。
-                if round == 1 {
+                // 第 1 轮失败就没有退路；**不可重试的错误在任何一轮都没有退路** ——
+                // 补位轮不会让 401 或「Key 未配置」变好，只会白烧 1–2 分钟，
+                // 然后把真实原因换成「候选不足」这种误导性的收尾状态。
+                if round == 1 || Self.isNonRetryable(error) {
                     await reportState(.error(
                         message: error.localizedDescription,
                         retryable: !Self.isNonRetryable(error)
@@ -545,10 +547,11 @@ actor RecommendationEngine {
         return counts
     }
 
+    /// 判断收在 `LLMServiceError.isTerminal` 上，两个调用方（引擎与头像刷新器）
+    /// 共用同一份口径 —— 原先这里只认 `.apiKeyNotConfigured`，于是 401 会被
+    /// 当成可重试，UI 渲染出一个永远失败的重试按钮。
     private static func isNonRetryable(_ error: Error) -> Bool {
-        guard let llmError = error as? LLMServiceError else { return false }
-        if case .apiKeyNotConfigured = llmError { return true }
-        return false
+        (error as? LLMServiceError)?.isTerminal ?? false
     }
 
     // MARK: - Mapping

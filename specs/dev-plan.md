@@ -362,7 +362,7 @@ M1 (基础设施) ──→ M2 (MusicKit) ──→ M4 (编排引擎) ──→ 
 | 文件 | 里程碑 | 说明 |
 |------|--------|------|
 | `Songly/App/AppConfig.swift` | M1 | 全局常量（API endpoints, 超时配置等） |
-| `Songly/App/AppEnvironment.swift` | M1 | 环境变量读取（INFOPLIST_KEY_DEEPSEEK_API_KEY） |
+| ~~`Songly/App/AppEnvironment.swift`~~ **已删除** | M1 | 原为环境变量读取；现由 `Services/APIKeyStore.swift` 取代（设置页输入 + Keychain） |
 | `Songly/Models/RecommendationRecord.swift` | M1 | SwiftData 推荐记录模型（TrackInfo JSON 存储） |
 | `Songly/Models/UserPreferences.swift` | M1 | SwiftData 用户偏好模型（不含 auth 状态缓存） |
 | `Songly/Models/TrackItem.swift` | M3 | LLM 返回曲目模型 + TrackInfo 结构体 |

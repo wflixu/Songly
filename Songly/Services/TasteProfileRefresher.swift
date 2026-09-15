@@ -72,9 +72,17 @@ final class TasteProfileRefresher {
                 )
             )
         } catch {
-            #if DEBUG
-            print("[Songly] 画像生成失败（已忽略）：\(error.localizedDescription)")
-            #endif
+            // 画像失败本身不该打断用户（这是本文件顶部立下的取舍，保持不变），
+            // 但**必须让设置页能如实说一句**。这里的 print 不加 `#if DEBUG`：
+            // 本仓库已有 Release 下无条件打印的先例（`SonglyApp.swift` 的
+            // BGTaskScheduler 那几处），而这是一次性的失败信号，与
+            // `RecommendationEngine.logDiagnostics` 那种每轮都打的诊断性质不同。
+            print("[Songly] 画像生成失败：\(error.localizedDescription)")
+            NotificationCenter.default.post(
+                name: .tasteProfileRefreshFailed,
+                object: nil,
+                userInfo: ["message": error.localizedDescription]
+            )
             return
         }
 

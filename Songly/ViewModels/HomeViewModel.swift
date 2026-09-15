@@ -44,6 +44,22 @@ final class HomeViewModel {
     private let profileRefresher: TasteProfileRefresher
     private var observers: [NSObjectProtocol] = []
 
+    // MARK: - API Key
+
+    /// **private**：设置页不直接碰凭据，所有读写都走下面的方法。
+    /// 这样「谁写的 Key」和「谁读的 Key」在同一段代码里，且明文 Key 永不进入视图层。
+    private let keyStore: any APIKeyStoring
+    private let llmService: LLMServiceProtocol
+
+    /// 首页据此决定 hero 槽位放 `TodayCard` 还是「去配置 Key」。
+    /// 与 `authStatus` 一样是 `private(set)` 单一真相源 —— 设置页不持有副本，
+    /// 否则两个快照必然会漂移（本文件头部记过这个坑）。
+    private(set) var isAPIKeyConfigured: Bool
+
+    /// 口味画像最近的失败原因。未配置 Key 时**不记录** —— 那不是新闻，
+    /// 设置页同一屏已经在显示「未配置」了，再叠一条失败原因只是噪音。
+    private(set) var profileRefreshError: String?
+
     var isLoading: Bool {
         switch state {
         case .idle, .completed, .error, .onboarding:
@@ -59,20 +75,31 @@ final class HomeViewModel {
     /// 因此永远不触发，`NetworkMonitor` 注入了但没人读。
     var isOffline: Bool { !networkMonitor.isConnected }
 
-    var canTrigger: Bool { !isOffline && !isLoading }
+    /// 没配 Key 时点「生成」必然失败（引擎第 1 轮就抛 `apiKeyNotConfigured`），
+    /// 所以在这里就拦住 —— 让按钮变灰，而不是让用户等 40 秒再看一张错误卡。
+    ///
+    /// 因为这是所有入口的公共闸门，改这一行会连带把 `StyleChips` 也置灰。
+    var canTrigger: Bool { !isOffline && !isLoading && isAPIKeyConfigured }
 
     init(
         engine: RecommendationEngine,
         networkMonitor: NetworkMonitor,
         modelContainer: ModelContainer,
         backgroundService: BackgroundTaskService,
-        profileRefresher: TasteProfileRefresher
+        profileRefresher: TasteProfileRefresher,
+        llmService: LLMServiceProtocol,
+        keyStore: any APIKeyStoring
     ) {
         self.engine = engine
         self.networkMonitor = networkMonitor
         self.modelContainer = modelContainer
         self.backgroundService = backgroundService
         self.profileRefresher = profileRefresher
+        self.llmService = llmService
+        self.keyStore = keyStore
+        // 与 `authStatus` 同理：`load()` 是同步的，在这里播种，别让首页先闪一下
+        // 「未配置」再跳到正确状态。
+        self.isAPIKeyConfigured = APIKeyPolicy.isUsable(keyStore.load() ?? "")
         // `MusicAuthorization.currentStatus` 是同步的，所以在这里直接播种。
         // 原先 HomeView 是 `@State = .notDetermined` 加一个 `.task` 去补，结果
         // 已授权的用户每次冷启动都会先闪一下 Onboarding 再跳到首页。
@@ -92,6 +119,18 @@ final class HomeViewModel {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in await self?.loadRecentRecords() }
+        })
+
+        observers.append(NotificationCenter.default.addObserver(
+            forName: .tasteProfileRefreshFailed,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            Task { @MainActor in
+                // 未配置 Key 时画像**必然**失败，那不是需要展示的异常。
+                guard let self, self.isAPIKeyConfigured else { return }
+                self.profileRefreshError = note.userInfo?["message"] as? String
+            }
         })
 
         Task {
@@ -137,7 +176,13 @@ final class HomeViewModel {
 
         // 后台调度的入口。**不能**挪到 App 启动时：`schedule()` 内部会静默
         // 检查授权，启动那一刻用户还没授权，整个后台功能会静默失效。
-        backgroundService.schedule()
+        //
+        // 同时要求已配置 Key：没有它，每日唤醒会跑一遍管线、第 1 轮就失败，
+        // 而那个错误没有任何监听者 —— 纯粹的空转。
+        // 反过来的顺序（先填 Key 后授权）由 `saveAPIKey` 补挂。
+        if isAPIKeyConfigured {
+            backgroundService.schedule()
+        }
 
         // 首启时画像是在未授权状态下尝试的、直接返回了。授权成功后必须补一次，
         // 否则画像永远建不起来。
@@ -151,6 +196,43 @@ final class HomeViewModel {
     /// 会**先拉 200 首曲库**再做指纹判断，挂到前台切换等于每次回前台拉一次全库。
     func refreshTasteProfile() async {
         await profileRefresher.refreshIfNeeded()
+    }
+
+    // MARK: - API Key
+
+    /// 写入 Key 并立刻刷新首页状态。
+    ///
+    /// **先落盘、后联网**：连通性校验（`verifyAPIKey`）是调用方独立的一步，
+    /// 离线时 Key 也必须存得下来。
+    ///
+    /// 空输入**等价于清除**，省掉一个「字段清空了但没点清除」的歧义状态。
+    func saveAPIKey(_ raw: String) throws {
+        let normalized = APIKeyPolicy.normalize(raw)
+        guard !normalized.isEmpty else { return try clearAPIKey() }
+
+        try keyStore.save(APIKeyPolicy.validate(normalized))
+        isAPIKeyConfigured = true
+        profileRefreshError = nil
+
+        // 之前因为没 Key 而被跳过的后台调度，现在补上 —— 覆盖「先授权、
+        // 很久以后才填 Key」这个顺序。反向顺序在 `requestMusicAuthorization` 里。
+        if authStatus == .authorized {
+            backgroundService.schedule()
+        }
+    }
+
+    func clearAPIKey() throws {
+        try keyStore.clear()
+        isAPIKeyConfigured = false
+        profileRefreshError = nil
+    }
+
+    /// 保存后的连通性探测。**只负责给用户一句结论**，不参与任何业务判断。
+    ///
+    /// 抛出的错误由调用方区分「Key 有问题」（`LLMServiceError.httpError` 4xx）与
+    /// 「网线有问题」（URLError）—— 这两件事对用户的含义完全不同。
+    func verifyAPIKey() async throws {
+        try await llmService.verifyCredentials()
     }
 
     // MARK: - Generation

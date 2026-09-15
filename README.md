@@ -48,7 +48,7 @@ Apple Music 曲库全、无广告、体验好，但 **个性化推荐太弱了**
 
 - macOS 26+ with Xcode 26+
 - Apple Music 订阅
-- DeepSeek API Key
+- DeepSeek API Key（**首次启动后在 App 的设置页填入**，不需要配置任何构建环境变量）
 
 ### 克隆 & 启动
 

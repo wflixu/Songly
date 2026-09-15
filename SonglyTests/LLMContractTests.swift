@@ -315,7 +315,7 @@ struct SeedRequestBodyTests {
     func usesCurrentModelID() throws {
         // `deepseek-v4-flash` 已被官方退役 —— 它还能路由，但那是未文档化的
         // 兜底行为。这条断言就是防止它悄悄回退到旧值。
-        let json = try body(LLMService())
+        let json = try body(LLMService(keyStore: InMemoryAPIKeyStore(initial: nil)))
         #expect(json["model"] as? String == "deepseek-flash")
         #expect(AppConfig.deepseekModel == "deepseek-flash")
     }
@@ -323,7 +323,7 @@ struct SeedRequestBodyTests {
     @Test("输出上限不再是 1000")
     func raisesOutputCeiling() throws {
         // 旧值 1000 只够 25–40 行歌名，是「歌单长度不稳定」的直接原因之一。
-        let json = try body(LLMService())
+        let json = try body(LLMService(keyStore: InMemoryAPIKeyStore(initial: nil)))
         #expect(json["max_tokens"] as? Int == AppConfig.llmMaxOutputTokens)
         #expect((json["max_tokens"] as? Int ?? 0) >= 8000)
     }
@@ -332,7 +332,7 @@ struct SeedRequestBodyTests {
     func forcesToolChoice() throws {
         // 服务端在「强制 tool_choice + thinking 开启」时返回 400，
         // 这两项是绑定的，改一个就会整体失效。
-        let json = try body(LLMService())
+        let json = try body(LLMService(keyStore: InMemoryAPIKeyStore(initial: nil)))
 
         let thinking = json["thinking"] as? [String: Any]
         #expect(thinking?["type"] as? String == "disabled")
@@ -349,7 +349,7 @@ struct SeedRequestBodyTests {
 
     @Test("system 与 messages 原样透传")
     func passesThroughSystemAndMessages() throws {
-        let json = try body(LLMService(), system: "画像在这里", user: "任务在这里")
+        let json = try body(LLMService(keyStore: InMemoryAPIKeyStore(initial: nil)), system: "画像在这里", user: "任务在这里")
         #expect(json["system"] as? String == "画像在这里")
 
         let messages = json["messages"] as? [[String: Any]]

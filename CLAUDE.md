@@ -17,7 +17,7 @@
 | AI | DeepSeek API |
 | 开发 | Xcode project (直接管理) |
 | 测试 | Swift Testing (单元), XCTest (UI) |
-| 最低系统 | iOS 26.5 |
+| 最低系统 | iOS 27.0 |
 
 ## 项目结构
 
@@ -51,7 +51,8 @@ xcodebuild -project Songly.xcodeproj -scheme Songly test -destination 'platform=
 - 使用 SwiftUI 原生组件，不引入第三方 UI 框架
 - 数据持久化使用 SwiftData (`@Model`, `@Query`, `ModelContainer`)
 - 异步操作使用 `async/await`
-- API Key 等敏感信息不硬编码，使用 `.xcconfig` 或环境变量
+- API Key 由用户在设置页填写，存 Keychain（`Services/APIKeyStore.swift`）。不落磁盘明文、不进 bundle、不进 Info.plist
+- 任何「写的地方」和「读的地方」必须是同一个对象 —— 凭据尤其如此，见 `APIKeyPolicy` 的注释
 
 ## MusicKit 要点
 

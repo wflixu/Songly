@@ -224,6 +224,10 @@ TabView
 实施计划之前，先解决 MockLLMService 静默降级的问题：
 
 1. 删除 `MockLLMService` 类（`LLMService.swift` 中）
+
+> ⚠️ **已过时（2026-09）**：`isAPIKeyConfigured` 现在**必须保留** —— Key 改由用户
+> 在设置页提供后，它是「用户到底配没配」的唯一真相来源。本节其余部分（移除
+> MockLLMService）仍然成立。本文件是历史实施方案，不做重写。
 2. 移除 `LLMServiceProtocol` 协议（不再需要 mock 实现）
 3. `SonglyApp.swift` 中直接使用 `LLMService()`，移除 `isAPIKeyConfigured` 判断
 4. 如 API Key 未配置，`LLMService.recommend()` 直接抛出 `apiKeyNotConfigured` 错误 → UI 显示明确错误信息

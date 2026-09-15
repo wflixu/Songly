@@ -56,7 +56,8 @@ songs = fetchLibrarySongs(limit: 200, since: lastSyncDate)
 调用 `LLMService.recommend(prompt:)`，返回 `[TrackItem]`（`title + artist`）。见第 6 节。
 
 - 最低数量校验：`recommendations.count >= AppConfig.minTrackCount (10)`，不足则报错。
-- 错误分两类：API Key 未配置 → 不可重试；其它 → 可重试（并透出底层具体错误信息）。
+- 错误分两类，判据是 `LLMServiceError.isTerminal`：Key 未配置、以及 401/402/403 这类鉴权与配额错误 → **不可重试**（重试不会让它变好）；429、5xx、超时、解析失败 → 可重试。两类都透出底层具体错误信息。
+  - 补位轮（第 2、3 轮）遇到不可重试的错误同样会立刻中止并报错 —— 否则会白烧 1–2 分钟，最后以「候选不足」这种误导性的收尾状态呈现。
 
 ### Step 5 · 曲库匹配（并发）
 
