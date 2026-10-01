@@ -84,11 +84,14 @@ final class FeedbackStore {
         var removedIDs: Set<String> = []
         /// 永久排除：归一化文本键（用于跨 ID 口径的兜底匹配）。
         var removedKeys: Set<TrackKey> = []
-        /// 隐式排除：他被发现从**我们建的歌单里**自己删掉的歌。
+        /// **观察到**的隐式删除：他被发现从我们建的歌单里自己删掉的歌。
         ///
-        /// 与显式的 `removedIDs` 走同一个「永不放宽」出口（它同样是刚性的用户意志），
-        /// 但**分开存** —— 诊断日志要能回答「这个闸门挡了多少次」，混在一起就分不清
-        /// 「他删了多少」和「他删了多少次 App 里的」。
+        /// ⚠️ 这里是「观察到了什么」，不是「要拿它怎么办」—— 是否让它进**硬排除**
+        /// 由 `AppConfig.treatPlaylistRemovalAsPermanent` 决定，判断点在
+        /// `RecommendationEngine.makeExclusions`（唯一的消费点）。
+        ///
+        /// 刻意与显式的 `removedIDs` 分开存：诊断要能回答「这个闸门挡了多少次」，
+        /// 混在一起就分不清「他删了多少」和「他删了多少次 App 里的」。
         var implicitRemovedIDs: Set<String> = []
         var implicitRemovedKeys: Set<TrackKey> = []
         /// 主艺人 → 权重。正数上浮，负数下沉。已夹取。
@@ -143,10 +146,10 @@ final class FeedbackStore {
                 // **不改 `FeedbackSummary`** —— 那是「他明确说了什么」的渲染，
                 // 往里塞一条我们自己推断的东西，就是让 prompt 去对模型撒谎。
                 // 隐式信号的措辞与归因在 `ImplicitSignals.promptBlock` 里单独讲。
-                // 开关在这里判而不是在写入端判：写入端照常留痕（观测数据本身有价值），
-                // 由这里决定它**生不生效** —— 这样以后翻开关，历史数据会一起跟着变。
-                if AppConfig.treatPlaylistRemovalAsPermanent,
-                   track.implicitRemovedAt != nil, track.verdict == nil {
+                // **只做观察，不做取舍。** 是否进硬排除交给 `makeExclusions` ——
+                // 单一消费点同时管住「落盘的历史」与「本轮刚发现的」。
+                // 判断留在这里的话会出现半失效：开关关了，当轮实时那批照样排除。
+                if track.implicitRemovedAt != nil, track.verdict == nil {
                     result.implicitRemovedIDs.insert(track.id)
                     result.implicitRemovedKeys.insert(track.key)
                 }

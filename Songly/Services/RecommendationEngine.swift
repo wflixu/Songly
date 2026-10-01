@@ -73,6 +73,8 @@ actor RecommendationEngine {
     private let catalogResolver: CatalogResolving
     private let tasteProfileStore: TasteProfileStore
     private let implicitDetector: ImplicitSignalDetecting
+    /// 只用于清理旧歌单（MusicKit 的 Swift API 没有删除能力，只能走 REST）。
+    private let libraryService: MusicLibraryServicing
     private let modelContainer: ModelContainer
 
     private var isRunning = false
@@ -87,6 +89,7 @@ actor RecommendationEngine {
         /// 隐式信号检测器。给默认值是为了让既有测试与预览继续编译 ——
         /// 换测试替身时从这里注入。
         implicitDetector: ImplicitSignalDetecting = ImplicitSignalDetector(),
+        libraryService: MusicLibraryServicing = MusicLibraryService(),
         modelContainer: ModelContainer
     ) {
         self.musicKitService = musicKitService
@@ -95,6 +98,7 @@ actor RecommendationEngine {
         self.catalogResolver = catalogResolver
         self.tasteProfileStore = tasteProfileStore
         self.implicitDetector = implicitDetector
+        self.libraryService = libraryService
         self.modelContainer = modelContainer
     }
 
@@ -601,6 +605,8 @@ actor RecommendationEngine {
 
         // ---- Step 9: Done ----
         await reportState(.completed(trackCount: matchedTracks.count, playlistName: playlist.name))
+        // 收尾：清理旧歌单。放在完成态**之后** —— 它失败也不该影响刚建成的这一份。
+        await pruneOldPlaylists()
         await NotificationService.shared.sendRecommendationReady(count: matchedTracks.count)
     }
 
@@ -724,6 +730,19 @@ actor RecommendationEngine {
             windowDays: AppConfig.dedupWindowDays, sources: ["daily"]
         ).map(\.key)
 
+        // 「他从我们建的歌单里删掉了」—— 是否让它进**硬排除**由开关决定。
+        //
+        // **这里是唯一的判断点**（这是刻意的）：它同时管住两个来源 ——
+        // `feedback.implicitRemovedIDs`（落盘的历史）与 `implicitSignals.removedIDs`
+        // （本轮刚发现的）。只在一处判的话会出现半失效：开关关了，另一批照样排除。
+        // 之前就是这个状态 —— `derive()` 判了，这里没判。
+        //
+        // 开关关掉时它仍然起作用，只是走艺人权重（-1）那条软路径。
+        let implicitRemovedIDs = AppConfig.treatPlaylistRemovalAsPermanent
+            ? feedback.implicitRemovedIDs.union(implicitSignals.removedIDs) : []
+        let implicitRemovedKeys = AppConfig.treatPlaylistRemovalAsPermanent
+            ? feedback.implicitRemovedKeys.union(implicitSignals.removedKeys) : []
+
         return PlaylistComposer.ExclusionSet(
             songIDs: dailyIDs.union(quickPickIDs),
             keys: Set(historyKeys),
@@ -732,18 +751,9 @@ actor RecommendationEngine {
             // 用户删掉的歌。**与上面几项不同，它不受放宽阶梯影响** ——
             // 用户说了不要，候选不够也不是把它塞回去的理由。
             //
-            // 三个来源并起来：
-            // - `removedIDs`：App 内「删除」；
-            // - `implicitRemovedIDs`：他从我们建的歌单里自己删掉的（`derive` 读的落盘值，
-            //   覆盖全部历史，含回看窗口之外的）；
-            // - `implicitSignals.removedIDs`：**本轮**刚发现的。与上一条重叠，但并上它
-            //   是为了**不依赖落盘成功** —— 存盘失败时这一轮的排除仍然生效。
-            removedSongIDs: feedback.removedIDs
-                .union(feedback.implicitRemovedIDs)
-                .union(implicitSignals.removedIDs),
-            removedKeys: feedback.removedKeys
-                .union(feedback.implicitRemovedKeys)
-                .union(implicitSignals.removedKeys)
+            // `removedIDs` 是 App 内「删除」，**永不放宽**。
+            removedSongIDs: feedback.removedIDs.union(implicitRemovedIDs),
+            removedKeys: feedback.removedKeys.union(implicitRemovedKeys)
         )
     }
 
@@ -838,6 +848,9 @@ actor RecommendationEngine {
                 "adopted": implicitSignals.adopted.count,
                 "listened": implicitSignals.listened.count,
                 "playlist_removed": implicitSignals.removedSongs.count,
+                // **歌名本身也要记。** 只有计数的话，这个信号被判错时无从核对 ——
+                // 而它会走硬排除，用户看不见也撤销不了。已排序、已封顶，字节稳定。
+                "playlist_removed_names": implicitSignals.removedSongs,
                 "weighted_artists": implicitSignals.artistWeights.count,
                 "degraded": implicitObservation.degraded,
                 "notes": implicitObservation.notes,
@@ -1180,6 +1193,52 @@ actor RecommendationEngine {
         } catch {
             return false
         }
+    }
+
+    /// 清理我们自己建的旧歌单，只留最近 `AppConfig.keepRecentPlaylists` 份。
+    ///
+    /// **默认关闭**（`AppConfig.autoDeleteOldPlaylists`）—— 这是整套东西里唯一一个
+    /// **不可撤销的破坏性操作**（删掉就是删掉了），而且走的是 REST，尚未在真机验证过。
+    ///
+    /// 删成功之后把记录上的 `playlistID` / `playlistURL` 一并清掉：不清的话，那条记录
+    /// 会一直指向一份**已经不存在的播放列表**，详情页的「在 Apple Music 中打开」会跳死链。
+    /// 曲目与日期**全部保留** —— 那是历史与迭代数据，清理歌单不该动它。
+    ///
+    /// ⚠️ `keepRecentPlaylists` 必须 ≥ `maxPlaylistDiffsPerRun`（隐式信号的歌单 diff
+    /// 要看最近几份）。调小前者会让「他有没有删歌」静默失效。
+    @MainActor
+    private func pruneOldPlaylists() async {
+        guard AppConfig.autoDeleteOldPlaylists else { return }
+
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<RecommendationRecord>(
+            predicate: #Predicate<RecommendationRecord> { record in
+                record.status == "completed"
+            },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        let records = (try? context.fetch(descriptor)) ?? []
+
+        // 只按「日期倒序 + 跳过前 N 份」判定，删掉的必然是我们自己建的 ——
+        // 记录里的 `playlistID` 只可能来自 `createPlaylist`。
+        let stale = records
+            .filter { $0.playlistID != nil }
+            .dropFirst(AppConfig.keepRecentPlaylists)
+
+        var changed = false
+        for record in stale {
+            if Task.isCancelled { break }
+            guard let playlistID = record.playlistID else { continue }
+            guard await libraryService.deletePlaylist(playlistID: playlistID) else {
+                // 删不掉就**不**清本地引用：本地仍指向一份真实存在的歌单，
+                // 清掉反而会让用户以为它没了。下一轮还会再试。
+                continue
+            }
+            record.playlistID = nil
+            record.playlistURL = nil
+            changed = true
+        }
+        if changed { try? context.save() }
     }
 
     @MainActor

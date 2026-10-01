@@ -105,6 +105,13 @@ enum DiagnosticsExporter {
         if let tier = track.tier { json["tier"] = tier.rawValue }
         if let verdict = track.verdict { json["verdict"] = verdict.rawValue }
         if let at = track.verdictUpdatedAt { json["verdict_updated_at"] = iso8601(at) }
+        // 隐式信号写进曲目的两个字段。
+        //
+        // **必须导出**：`implicit_removed_at` 非空意味着这首歌被判为「他从我们建的歌单里
+        // 删掉了」，而它会走**永不放宽的硬排除**。判错一次就永久丢掉一首歌，用户看不见
+        // 也撤销不了 —— 导出里没有这两个字段的话，连「哪几首被判了」都无从核对。
+        if let at = track.librarySyncedAt { json["library_synced_at"] = iso8601(at) }
+        if let at = track.implicitRemovedAt { json["implicit_removed_at"] = iso8601(at) }
         return json
     }
 

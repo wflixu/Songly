@@ -174,9 +174,38 @@ enum AppConfig {
     static let implicitNegativeArtistWeight = -1
     /// 用户从我们建的歌单里删掉的曲目，是否进「永不放宽」的硬排除。
     ///
-    /// 默认 true：那个动作的语义与 App 内的 `remove(_:)` 完全一致，代码库已经判定
-    /// 后者是刚性意志。探测显示 diff 不可靠时改 false 降级为「只降权、不排除」。
-    static let treatPlaylistRemovalAsPermanent = true
+    /// 那个动作的语义与 App 内的 `remove(_:)` 完全一致，**本该**是刚性意志。
+    /// 设成 `false` 是一层保险：降级为「只降权（艺人 -1）、不排除」，
+    /// 把那 8 首可能被误判的歌从**不可撤销**的路径上摘下来。
+    ///
+    /// ⚠️ 当前为 `false`，理由是「歌单 diff 的匹配率还没被探测验证过」。
+    /// 但 2026-10-01 已经有一条**实测证据**支持它是准的：v4 那一轮判了 8 首
+    /// 「从歌单里消失」，用户确认「删过，差不多就是这个量」。
+    /// 所以这个 `false` 是**审慎**而非**怀疑** —— 等设置页的「探测：歌单条目」
+    /// 报出匹配率 ≥ 90%，或者你确信那 8 首就是自己删的，把它改回 `true` 即可：
+    /// 那个动作本来就该是永不放宽的。
+    static let treatPlaylistRemovalAsPermanent = false
+
+    // MARK: - 旧歌单清理
+
+    /// 保留最近几份歌单，其余自动删。用户选定 7 —— 约一周（他每天 1–2 份）。
+    ///
+    /// ⚠️ **这个数不能小到影响隐式信号的歌单 diff。** 那边单次最多 diff
+    /// `maxPlaylistDiffsPerRun`(3) 份，7 ≥ 3 是安全的；若以后调小这个值，
+    /// 必须同时确认那个约束还成立，否则「他有没有删歌」会静默失效
+    /// （查不到歌单 → 记 `playlist_missing` → 什么都不标）。
+    static let keepRecentPlaylists = 7
+
+    /// 是否自动删除旧歌单。
+    ///
+    /// 默认 **false** —— 与 `writeBackLovedRating` / `readAppleMusicRatings` 同一理由，
+    /// 而且这里更重：它是**不可撤销的破坏性操作**（删掉就是删掉了），
+    /// 走的又是 REST（`DELETE /v1/me/library/playlists/{id}`），
+    /// 而开发者社区长期反馈这个端点返回 403。
+    ///
+    /// 先在设置页 DEBUG 区跑「探测：删除歌单」（它会新建一份一次性歌单再删它，
+    /// 不碰用户已有的歌单），拿到结论再打开。
+    static let autoDeleteOldPlaylists = false
 
     // MARK: - 版本标识（数据批次的可比性）
 
@@ -193,12 +222,14 @@ enum AppConfig {
     /// - `3` —— 推荐 v3：情境 + 三层配比。
     /// - `4` —— 跨天艺人闸门（`artistBlockedWithinDays` / `artistCooldownDays`
     ///   三档上限）与 prompt 里的「近 3 天出现过的艺人」区块。
+    /// - `5` —— 歌单 diff 的隐式删除**不进硬排除**（`treatPlaylistRemovalAsPermanent`
+    ///   改为 false），只走艺人降权。它改变的是「哪些歌能被选中」，所以算算法变更。
     ///
     /// ⚠️ 实测教训：4 是在第 2 项**已经上真机验证完之后**才补上的。中间有一次
     /// 真机生成的记录带着 `3`，但它跑的是**不带闸门**的代码 —— 那条记录在版本上
     /// 是错的，会让后续的跨版本统计把「闸门前后的数据」混成一批。**先改版本号，
     /// 再改算法**，不要反过来。
-    static let pipelineVersion = 4
+    static let pipelineVersion = 5
 
     /// prompt 结构的版本号。**改动 `PromptBuilderV3` 里任何一个块的措辞、顺序或增删
     /// 都要 +1** —— 它直接改变模型看到的东西，与算法版本是两件事，混在一起就分不清
