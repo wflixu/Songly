@@ -56,12 +56,15 @@
 		F0DEC0DE0000000000000014 /* SceneAndProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000013 /* SceneAndProfileTests.swift */; };
 		F0DEC0DE0000000000000016 /* TasteProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000015 /* TasteProfile.swift */; };
 		F0DEC0DE0000000000000018 /* TasteProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000017 /* TasteProfileStore.swift */; };
+		F0DEC0DE000000000000002C /* DiagnosticsExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000002B /* DiagnosticsExporter.swift */; };
+		F0DEC0DE000000000000002E /* ImplicitSignalDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000002D /* ImplicitSignalDetector.swift */; };
 		F0DEC0DE000000000000001A /* GapRoundPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000019 /* GapRoundPlanner.swift */; };
 		F0DEC0DE000000000000001C /* PipelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000001B /* PipelineTests.swift */; };
 		F0DEC0DE000000000000001E /* AlbumTrackPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000001D /* AlbumTrackPicker.swift */; };
 		F0DEC0DE0000000000000020 /* CatalogResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000001F /* CatalogResolver.swift */; };
 		F0DEC0DE0000000000000022 /* PromptBuilderV3.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000021 /* PromptBuilderV3.swift */; };
 		F0DEC0DE0000000000000024 /* PromptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000023 /* PromptTests.swift */; };
+		F0DEC0DE0000000000000030 /* ImplicitSignalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE000000000000002F /* ImplicitSignalTests.swift */; };
 		F0DEC0DE0000000000000026 /* TasteProfileRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000025 /* TasteProfileRefresher.swift */; };
 		F0DEC0DE0000000000000028 /* APIKeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DEC0DE0000000000000027 /* APIKeyStore.swift */; };
 		F5383CFA411513A99AA9D8E8 /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8D6E45EE067C6184AD9D74 /* UserPreferences.swift */; };
@@ -138,12 +141,15 @@
 		F0DEC0DE0000000000000013 /* SceneAndProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneAndProfileTests.swift; sourceTree = "<group>"; };
 		F0DEC0DE0000000000000015 /* TasteProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteProfile.swift; sourceTree = "<group>"; };
 		F0DEC0DE0000000000000017 /* TasteProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteProfileStore.swift; sourceTree = "<group>"; };
+		F0DEC0DE000000000000002B /* DiagnosticsExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsExporter.swift; sourceTree = "<group>"; };
+		F0DEC0DE000000000000002D /* ImplicitSignalDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImplicitSignalDetector.swift; sourceTree = "<group>"; };
 		F0DEC0DE0000000000000019 /* GapRoundPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GapRoundPlanner.swift; sourceTree = "<group>"; };
 		F0DEC0DE000000000000001B /* PipelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipelineTests.swift; sourceTree = "<group>"; };
 		F0DEC0DE000000000000001D /* AlbumTrackPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumTrackPicker.swift; sourceTree = "<group>"; };
 		F0DEC0DE000000000000001F /* CatalogResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogResolver.swift; sourceTree = "<group>"; };
 		F0DEC0DE0000000000000021 /* PromptBuilderV3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptBuilderV3.swift; sourceTree = "<group>"; };
 		F0DEC0DE0000000000000023 /* PromptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTests.swift; sourceTree = "<group>"; };
+		F0DEC0DE000000000000002F /* ImplicitSignalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImplicitSignalTests.swift; sourceTree = "<group>"; };
 		F0DEC0DE0000000000000025 /* TasteProfileRefresher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteProfileRefresher.swift; sourceTree = "<group>"; };
 		F0DEC0DE0000000000000027 /* APIKeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeyStore.swift; sourceTree = "<group>"; };
 		F9D5FBCEDEA1EFAE7992B7DF /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
@@ -161,6 +167,7 @@
 				F0DEC0DE0000000000000013 /* SceneAndProfileTests.swift */,
 				F0DEC0DE000000000000001B /* PipelineTests.swift */,
 				F0DEC0DE0000000000000023 /* PromptTests.swift */,
+				F0DEC0DE000000000000002F /* ImplicitSignalTests.swift */,
 				B2C3D4E5F60718293A4B5C09 /* FeedbackTests.swift */,
 			);
 			path = SonglyTests;
@@ -250,6 +257,8 @@
 				F0DEC0DE0000000000000005 /* PlaylistComposer.swift */,
 				F0DEC0DE000000000000000D /* AnthropicSeedParser.swift */,
 				F0DEC0DE0000000000000017 /* TasteProfileStore.swift */,
+				F0DEC0DE000000000000002B /* DiagnosticsExporter.swift */,
+				F0DEC0DE000000000000002D /* ImplicitSignalDetector.swift */,
 				F0DEC0DE0000000000000025 /* TasteProfileRefresher.swift */,
 				F0DEC0DE0000000000000027 /* APIKeyStore.swift */,
 				F0DEC0DE0000000000000019 /* GapRoundPlanner.swift */,
@@ -450,6 +459,8 @@
 				F0DEC0DE0000000000000012 /* ListeningScene.swift in Sources */,
 				F0DEC0DE0000000000000016 /* TasteProfile.swift in Sources */,
 				F0DEC0DE0000000000000018 /* TasteProfileStore.swift in Sources */,
+				F0DEC0DE000000000000002C /* DiagnosticsExporter.swift in Sources */,
+				F0DEC0DE000000000000002E /* ImplicitSignalDetector.swift in Sources */,
 				F0DEC0DE0000000000000026 /* TasteProfileRefresher.swift in Sources */,
 				F0DEC0DE0000000000000028 /* APIKeyStore.swift in Sources */,
 				F0DEC0DE000000000000001A /* GapRoundPlanner.swift in Sources */,
@@ -494,6 +505,7 @@
 				F0DEC0DE0000000000000014 /* SceneAndProfileTests.swift in Sources */,
 				F0DEC0DE000000000000001C /* PipelineTests.swift in Sources */,
 				F0DEC0DE0000000000000024 /* PromptTests.swift in Sources */,
+				F0DEC0DE0000000000000030 /* ImplicitSignalTests.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */

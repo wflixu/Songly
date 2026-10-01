@@ -13,6 +13,15 @@ import SwiftData
 final class RecommendationRecord {
     static let statusPending = "pending"
     static let statusCompleted = "completed"
+    /// 运行失败。**保留记录**，好让「今天为什么没出歌单」事后有据可查。
+    ///
+    /// ⚠️ 这类记录的曲目**从未出现在任何歌单里**，所以所有展示与去重路径都必须
+    /// 把它排除掉 —— 否则会把用户从没见过的歌排除掉、或让首页显示一份并不存在的歌单。
+    /// `loadTodayRecord` 与 `PlaylistHistoryView` 本来就按 `completed` 过滤；
+    /// `loadRecentRecords` / `fetchRecentRecords` / `countTodayRecommendations`
+    /// 是随本次改动一起补上的（顺带修掉一个既有隐患：进程若在「落库」与
+    /// 「建歌单」之间被杀，那条 `pending` 记录同样会污染这两处）。
+    static let statusFailed = "failed"
 
     /// 推荐日期（唯一约束，用于"今日是否已生成"判断）。
     @Attribute(.unique) var date: Date
@@ -54,6 +63,33 @@ final class RecommendationRecord {
     /// 差值，供详情页那行「N 首已移除（Apple Music 中的歌单不变）」使用。
     /// 旧记录为 0。
     var removedCount: Int = 0
+
+    // MARK: - 版本标识（数据批次的可比性）
+    //
+    // 没有这几个字段，「这份歌单是哪一版算法产的」就无从得知 —— 算法一改，
+    // 新旧数据混在同一张表里无法区分批次。全部是 `var` + 默认值，
+    // 与 `scene` / `rating` 同一套路，**不需要 SwiftData 迁移**。
+
+    /// 产物版本，见 `AppConfig.pipelineVersion`。**0 = 未标记的旧记录。**
+    var pipelineVersion: Int = 0
+    /// prompt 结构版本，见 `AppConfig.promptVersion`。
+    var promptVersion: Int = 0
+    /// 生成时用的模型 ID。模型名会变（`AppConfig` 的注释记录过旧模型被退役的先例），
+    /// 不留痕就无法解释「同一版算法为什么前后表现不一样」。
+    var modelID: String? = nil
+
+    /// 该次运行的完整诊断 —— 与 `logDiagnostics` 打的是**同一份 payload**。
+    ///
+    /// ⚠️ **刻意不放在 `#if DEBUG` 里。** 02:00 的后台任务跑的是 Release 构建，
+    /// 而它恰恰是歌单的主要产出路径；跟着 DEBUG 走的话，数据在 Release 下
+    /// **永远是空的**，而且这个错法不报错、只静默产出零数据。
+    var diagnosticsJSON: String? = nil
+
+    /// 失败原因（仅 `status == "failed"` 时有值）。
+    var failureReason: String? = nil
+
+    /// 用户最近一次给出歌单评价的时间。`nil` = 从未评价，或评价已被撤销。
+    var ratedAt: Date? = nil
 
     // MARK: - Computed: TrackInfo
 
@@ -153,7 +189,13 @@ final class RecommendationRecord {
         playlistURL: URL? = nil,
         scene: String? = nil,
         rating: String? = nil,
-        removedCount: Int = 0
+        removedCount: Int = 0,
+        pipelineVersion: Int = 0,
+        promptVersion: Int = 0,
+        modelID: String? = nil,
+        diagnosticsJSON: String? = nil,
+        failureReason: String? = nil,
+        ratedAt: Date? = nil
     ) {
         self.date = date
         self.strategy = strategy
@@ -172,5 +214,11 @@ final class RecommendationRecord {
         self.scene = scene
         self.rating = rating
         self.removedCount = removedCount
+        self.pipelineVersion = pipelineVersion
+        self.promptVersion = promptVersion
+        self.modelID = modelID
+        self.diagnosticsJSON = diagnosticsJSON
+        self.failureReason = failureReason
+        self.ratedAt = ratedAt
     }
 }

@@ -351,3 +351,140 @@ struct PrimaryArtistKeyTests {
         #expect(primaryArtistKey("X Japan") == "x japan")
     }
 }
+
+// MARK: - 跨天艺人闸门
+
+/// 三档规则：近 3 天出现过 → 0 首；4–14 天 → 1 首；更早 / 从未 → 2 首。
+/// 阈值见 `AppConfig.artistBlockedWithinDays`，实现见 `PlaylistComposer.Input.artistCap`。
+///
+/// 用户的原话是「昨天听了这个歌手的歌，今天还有，明天还有」。在此之前跨天只有
+/// 层内排序，挡不住任何人 —— 这些用例钉住的就是那个修复。
+@Suite("PlaylistComposer — 跨天艺人闸门")
+struct ComposerArtistRecencyTests {
+
+    /// 把「现在」钉死，否则用例会随日期漂移。
+    private let now = Date()
+
+    private func daysAgo(_ days: Int) -> Date {
+        Calendar.current.date(byAdding: .day, value: -days, to: now)!
+    }
+
+    private func input(
+        _ candidates: [ResolvedCandidate],
+        lastSeen: [String: Date] = [:]
+    ) -> PlaylistComposer.Input {
+        var input = PlaylistComposer.Input(candidates: candidates)
+        input.recentArtistLastSeen = lastSeen
+        input.now = now
+        return input
+    }
+
+    // MARK: 分档与边界
+
+    @Test("三档边界：≤3 天禁、4–14 天限 1 首、≥15 天与从未出现不限")
+    func capTiersAndBoundaries() {
+        let input = input([], lastSeen: [
+            primaryArtistKey("今天"): daysAgo(0),
+            primaryArtistKey("三天"): daysAgo(3),
+            primaryArtistKey("四天"): daysAgo(4),
+            primaryArtistKey("十四天"): daysAgo(14),
+            primaryArtistKey("十五天"): daysAgo(15),
+        ])
+        let cap = { (name: String) in input.artistCap(for: primaryArtistKey(name), allowingRecent: false) }
+
+        #expect(cap("今天") == 0)
+        #expect(cap("三天") == 0)
+        #expect(cap("四天") == 1)
+        #expect(cap("十四天") == 1)
+        // 更早的必须回到 2 —— 那是「专辑深挖非主打」的前提，压到 1 等于把它关掉。
+        #expect(cap("十五天") == 2)
+        #expect(cap("从没出现过") == 2)
+    }
+
+    @Test("放宽后回到「最多 1 首」，而不是变成无限制")
+    func relaxingRestoresOneNotUnlimited() {
+        let input = input([], lastSeen: [primaryArtistKey("甲"): daysAgo(1)])
+        #expect(input.artistCap(for: primaryArtistKey("甲"), allowingRecent: false) == 0)
+        #expect(input.artistCap(for: primaryArtistKey("甲"), allowingRecent: true) == 1)
+    }
+
+    // MARK: 端到端
+
+    @Test("近 3 天出现过的艺人被拒，且归因落到 recent_artist")
+    func blockedArtistIsRejected() {
+        // 24 首独立艺人 + 1 首目标艺人：严格档下第 25 个位置正好空着，
+        // 闸门是否生效一目了然。
+        var candidates = distinctCandidates(count: 24, tier: .confident, idPrefix: "基")
+        candidates.append(makeCandidate(id: "x-1", title: "X 的歌", artist: "艺人X"))
+
+        let output = PlaylistComposer.compose(
+            input(candidates, lastSeen: [primaryArtistKey("艺人X"): daysAgo(1)])
+        )
+
+        #expect(!output.tracks.contains { $0.info.id == "x-1" })
+        #expect(output.rejections.contains { $0.info.id == "x-1" && $0.reason == .recentArtist })
+    }
+
+    @Test("4–14 天前出现过的艺人，本轮最多 1 首")
+    func cooldownArtistIsCappedAtOne() {
+        let pair = [
+            makeCandidate(id: "p-1", title: "P 一", artist: "艺人P"),
+            makeCandidate(id: "p-2", title: "P 二", artist: "艺人P"),
+        ]
+
+        let capped = PlaylistComposer.compose(
+            input(pair, lastSeen: [primaryArtistKey("艺人P"): daysAgo(6)])
+        )
+        #expect(capped.tracks.count == 1)
+        #expect(capped.rejections.contains { $0.reason == .artistCapped })
+
+        // 对照：同一批候选，没有近期记录时两首都进得了 —— 证明上面少的那一首
+        // 确实是闸门挡的，不是别的什么把它筛掉了。
+        #expect(PlaylistComposer.compose(input(pair)).tracks.count == 2)
+    }
+
+    @Test("池子荒时放宽档放行被禁的艺人，但只给 1 首")
+    func relaxedPassAdmitsBlockedArtistOnce() {
+        // 整池只有这位艺人，且他昨天刚出现过。严格档下一首都没有，
+        // 阶梯会自动放宽到 `recentArtistOverlap` —— 这就是「池子荒也不能当天出不了歌单」
+        // 的保证。
+        let pair = [
+            makeCandidate(id: "q-1", title: "Q 一", artist: "艺人Q"),
+            makeCandidate(id: "q-2", title: "Q 二", artist: "艺人Q"),
+        ]
+
+        let output = PlaylistComposer.compose(
+            input(pair, lastSeen: [primaryArtistKey("艺人Q"): daysAgo(1)])
+        )
+
+        #expect(output.tracks.count == 1)
+    }
+
+    @Test("新放宽档排在 everything 之前")
+    func ladderOrderPutsRecentArtistBeforeEverything() {
+        let ladder = PlaylistComposer.Relaxation.ladder
+        guard let recent = ladder.firstIndex(of: .recentArtistOverlap),
+              let everything = ladder.firstIndex(of: .everything) else {
+            Issue.record("阶梯里缺少 recentArtistOverlap 或 everything")
+            return
+        }
+        // 宁可让三天内出现过的艺人换一首歌再来，也不要把十四天内推过的**同一首**
+        // 重新塞回去 —— 后者伤害大得多，所以它必须排在更后面。
+        #expect(recent < everything)
+        #expect(ladder.first == .strict)
+    }
+
+    @Test("用户删掉的歌归因到 user_removed，不被艺人闸门抢走")
+    func userRemovedOutranksRecentArtist() {
+        let track = makeCandidate(id: "r-1", title: "R 的歌", artist: "艺人R")
+        var input = input([track], lastSeen: [primaryArtistKey("艺人R"): daysAgo(1)])
+        input.exclusions.removedSongIDs = ["r-1"]
+
+        let output = PlaylistComposer.compose(input)
+
+        // 归因顺序是刻意的：user_removed 是刚性意志，闸门只是择优偏好。
+        // 报错了原因，日志里就会把「闸门挡了多少」数成「用户删了多少」。
+        #expect(output.rejections.contains { $0.info.id == "r-1" && $0.reason == .userRemoved })
+        #expect(!output.rejections.contains { $0.info.id == "r-1" && $0.reason == .recentArtist })
+    }
+}

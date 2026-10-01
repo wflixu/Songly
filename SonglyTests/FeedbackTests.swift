@@ -120,7 +120,9 @@ struct ComposerArtistWeightTests {
             candidate(id: "loved", artist: "超赞过"),
             candidate(id: "down", artist: "被降权"),
         ])
-        input.artistWeights = ["超赞过": 3, "被降权": -3]
+        // key 必须过 `primaryArtistKey` —— composer 查的就是这个口径
+        // （`ResolvedCandidate.primaryArtist`）。见下面那条用例的注释。
+        input.artistWeights = [primaryArtistKey("超赞过"): 3, primaryArtistKey("被降权"): -3]
 
         let order = PlaylistComposer.compose(input).tracks.map(\.info.id)
 
@@ -140,7 +142,13 @@ struct ComposerArtistWeightTests {
         )
 
         var weightedInput = PlaylistComposer.Input(candidates: pool)
-        weightedInput.artistWeights = ["Z": 5]
+        // ⚠️ key 必须过 `primaryArtistKey`，因为它内部会 **lowercase**。
+        //
+        // 这里原先直接写 `["Z": 5]`：composer 用小写的 `"z"` 查表，永远 miss，
+        // 权重从未真正生效 —— 断言从写下那天起就不可能成立。之所以一直没被发现，
+        // 是因为这些测试长期没有被执行过（本机没有匹配的模拟器 runtime，
+        // 直到 2026-10-01 才在真机上第一次跑起来）。
+        weightedInput.artistWeights = [primaryArtistKey("Z"): 5]
         let weighted = PlaylistComposer.compose(weightedInput)
 
         // 配额分配必须完全一致 —— 权重是**排序**信号，不是配额信号。
@@ -160,7 +168,7 @@ struct ComposerArtistWeightTests {
             candidate(id: "bold", artist: "被超赞的", tier: .bold),
         ])
         input.tierQuotaEnabled = false
-        input.artistWeights = ["被超赞的": 5]
+        input.artistWeights = [primaryArtistKey("被超赞的"): 5]
 
         let tracks = PlaylistComposer.compose(input).tracks
 
@@ -203,43 +211,42 @@ struct FeedbackSummaryTests {
 
 // MARK: - 派生
 
-@MainActor
+// ⚠️ 这个 suite 的写法是有讲究的，**别"顺手整理"回去**。
+//
+// 原先是 `@MainActor @Suite(...)` + 两个 private helper。那种形态会让测试运行器的
+// **互操作桥必崩**（`Runner._applyScopingTraits(for:testCase:_:)`），于是这 6 条用例
+// 从写下来到现在**一次都没跑过** —— 每次整批运行都崩在这里，重启后被归因为「Crash」。
+//
+// 二分结论（2026-10-01，真机逐个跑出来的）：
+//   - 裸 `@MainActor @Test`                              → 正常
+//   - `@MainActor @Test` + in-memory `ModelContainer`     → 正常
+//   - 调用同一个 `FeedbackStore.derive()`，只是换个 suite → 正常
+//   - **原 struct 的那个形态**                            → 必崩
+// 具体是哪个语法特征触发的没有继续追 —— 收益不值那个时间。这里的写法是**已验证能跑**的。
+//
+// 所以：不抽 private helper、每条用例自建 store。啰嗦一点，但 6 条**跑得起来**的测试
+// 比 6 条优雅的死代码有价值得多。
 @Suite("FeedbackStore — 派生")
 struct FeedbackStoreTests {
 
-    private func makeStore() throws -> (FeedbackStore, ModelContext) {
+    @Test("删掉的歌进永久排除，超赞与删除分别给出正负权重")
+    @MainActor
+    func deriveAggregates() throws {
         let container = try ModelContainer(
             for: RecommendationRecord.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         let context = container.mainContext
-        return (FeedbackStore(context: context), context)
-    }
+        context.insert(RecommendationRecord(
+            date: Date(), strategy: "风格探索", songCount: 2,
+            tracks: [
+                TrackInfo(id: "s1", name: "歌一", artist: "艺人甲", verdict: .loved),
+                TrackInfo(id: "s2", name: "歌二", artist: "艺人乙", verdict: .removed),
+            ],
+            source: "daily"
+        ))
 
-    private func makeRecord(
-        tracks: [TrackInfo],
-        date: Date = Date(),
-        rating: PlaylistRating? = nil
-    ) -> RecommendationRecord {
-        RecommendationRecord(
-            date: date,
-            strategy: "风格探索",
-            songCount: tracks.count,
-            tracks: tracks,
-            source: "daily",
-            rating: rating?.rawValue
-        )
-    }
-
-    @Test("删掉的歌进永久排除，超赞与删除分别给出正负权重")
-    func deriveAggregates() throws {
-        let (store, context) = try makeStore()
-        context.insert(makeRecord(tracks: [
-            TrackInfo(id: "s1", name: "歌一", artist: "艺人甲", verdict: .loved),
-            TrackInfo(id: "s2", name: "歌二", artist: "艺人乙", verdict: .removed),
-        ]))
-
-        let derived = store.derive()
+        let derived = FeedbackStore(context: context).derive()
 
         #expect(derived.removedIDs == ["s2"])
         #expect(derived.artistWeights["艺人甲"] == 2)
@@ -247,51 +254,82 @@ struct FeedbackStoreTests {
     }
 
     @Test("权重夹取在 ±5，刷屏式反馈也不会把它顶穿")
+    @MainActor
     func weightIsClamped() throws {
-        let (store, context) = try makeStore()
+        let container = try ModelContainer(
+            for: RecommendationRecord.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = container.mainContext
         for index in 0..<10 {
-            context.insert(makeRecord(
+            context.insert(RecommendationRecord(
+                date: Date().addingTimeInterval(Double(-index) * 3600),
+                strategy: "风格探索", songCount: 1,
                 tracks: [TrackInfo(id: "s-\(index)", name: "歌", artist: "某艺人", verdict: .loved)],
-                date: Date().addingTimeInterval(Double(-index) * 3600)
+                source: "daily"
             ))
         }
 
-        #expect(store.derive().artistWeights["某艺人"] == 5)
+        #expect(FeedbackStore(context: context).derive().artistWeights["某艺人"] == 5)
     }
 
     @Test("同一首歌改了判定，**更新的记录**说了算")
+    @MainActor
     func latestVerdictWins() throws {
-        let (store, context) = try makeStore()
-        context.insert(makeRecord(
+        let container = try ModelContainer(
+            for: RecommendationRecord.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = container.mainContext
+        context.insert(RecommendationRecord(
+            date: Date().addingTimeInterval(-86400), strategy: "风格探索", songCount: 1,
             tracks: [TrackInfo(id: "s1", name: "歌", artist: "艺人", verdict: .loved)],
-            date: Date().addingTimeInterval(-86400)
+            source: "daily"
         ))
-        context.insert(makeRecord(
-            tracks: [TrackInfo(id: "s1", name: "歌", artist: "艺人", verdict: .removed)]
+        context.insert(RecommendationRecord(
+            date: Date(), strategy: "风格探索", songCount: 1,
+            tracks: [TrackInfo(id: "s1", name: "歌", artist: "艺人", verdict: .removed)],
+            source: "daily"
         ))
 
         // 先超赞、过些天又删掉 —— 那是「改主意了」，不是冲突。
-        #expect(store.derive().verdicts["s1"] == .removed)
+        #expect(FeedbackStore(context: context).derive().verdicts["s1"] == .removed)
     }
 
     @Test("歌单级的「不准」作用在该歌单仍然可见的曲目所属艺人身上")
+    @MainActor
     func ratingWeightsArtists() throws {
-        let (store, context) = try makeStore()
-        context.insert(makeRecord(
+        let container = try ModelContainer(
+            for: RecommendationRecord.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = container.mainContext
+        context.insert(RecommendationRecord(
+            date: Date(), strategy: "风格探索", songCount: 1,
             tracks: [TrackInfo(id: "s1", name: "歌一", artist: "艺人甲")],
-            rating: .off
+            source: "daily", rating: PlaylistRating.off.rawValue
         ))
 
-        #expect(store.derive().artistWeights["艺人甲"] == -1)
+        #expect(FeedbackStore(context: context).derive().artistWeights["艺人甲"] == -1)
     }
 
     @Test("删除维护 songCount 与 removedCount，撤销时反向恢复")
+    @MainActor
     func removalMaintainsCounts() throws {
-        let (store, context) = try makeStore()
-        let record = makeRecord(tracks: [
-            TrackInfo(id: "s1", name: "一", artist: "A"),
-            TrackInfo(id: "s2", name: "二", artist: "B"),
-        ])
+        let container = try ModelContainer(
+            for: RecommendationRecord.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = container.mainContext
+        let store = FeedbackStore(context: context)
+        let record = RecommendationRecord(
+            date: Date(), strategy: "风格探索", songCount: 2,
+            tracks: [
+                TrackInfo(id: "s1", name: "一", artist: "A"),
+                TrackInfo(id: "s2", name: "二", artist: "B"),
+            ],
+            source: "daily"
+        )
         context.insert(record)
 
         store.setVerdict(.removed, forSongID: "s1", in: record)
@@ -309,9 +347,19 @@ struct FeedbackStoreTests {
     }
 
     @Test("重复写同一个判定不会把计数写坏")
+    @MainActor
     func repeatedVerdictIsIdempotent() throws {
-        let (store, context) = try makeStore()
-        let record = makeRecord(tracks: [TrackInfo(id: "s1", name: "一", artist: "A")])
+        let container = try ModelContainer(
+            for: RecommendationRecord.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = container.mainContext
+        let store = FeedbackStore(context: context)
+        let record = RecommendationRecord(
+            date: Date(), strategy: "风格探索", songCount: 1,
+            tracks: [TrackInfo(id: "s1", name: "一", artist: "A")],
+            source: "daily"
+        )
         context.insert(record)
 
         store.setVerdict(.removed, forSongID: "s1", in: record)

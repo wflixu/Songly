@@ -40,16 +40,19 @@ struct HomeView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    vm.showSettings = true
+                // 用 `NavigationLink` 而不是「开 sheet」。
+                //
+                // 设置本来就是个浮层：右上角触发、还得管 detent、还得自备关闭按钮。
+                // 而它**没有任何需要「保存 / 取消」语义的流程**（Key 即时保存、开关
+                // 即时生效）—— 模态是用来打断当前任务、逼你完成一件事的，这里没这件事。
+                // 推入式导航顺带把「内容太长被半屏遮住」这个根因一起解决了。
+                NavigationLink {
+                    SettingsView()
                 } label: {
                     Image(systemName: "gearshape")
                 }
                 .accessibilityLabel("设置")
             }
-        }
-        .sheet(isPresented: $vm.showSettings) {
-            SettingsView()
         }
     }
 
@@ -83,7 +86,7 @@ struct HomeView: View {
                             )
                         )
                     } else {
-                        APIKeySetupCard { vm.showSettings = true }
+                        APIKeySetupCard()
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.page)
@@ -176,8 +179,6 @@ struct HomeView: View {
 /// 同一个圆角、同一颗胶囊按钮）—— 它们是同一张 hero 卡的两个面孔，
 /// 读起来应该是「这张卡还没有内容」，而不是「换了一个 App」。
 private struct APIKeySetupCard: View {
-    let onConfigure: () -> Void
-
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -190,7 +191,11 @@ private struct APIKeySetupCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Button(action: onConfigure) {
+            // 与右上角齿轮走同一个目的地 —— 这里也必须是 `NavigationLink`，
+            // 否则「未配 Key」时这条唯一的出路会失效。
+            NavigationLink {
+                SettingsView()
+            } label: {
                 Label("去设置", systemImage: "gearshape")
                     .font(.headline)
                     .foregroundStyle(Theme.brand)

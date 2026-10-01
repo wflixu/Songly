@@ -17,11 +17,27 @@ protocol MusicKitServiceProtocol: Sendable {
     /// Request authorization. Only shows system dialog when .notDetermined.
     func requestAuthorization() async -> MusicAuthorization.Status
 
-    /// Fetch user's library songs with incremental sync support.
-    /// - Parameters:
-    ///   - limit: Maximum songs for full fetch.
-    ///   - lastSync: If non-nil, only fetch songs added after this date.
-    func fetchLibrarySongs(limit: Int, since lastSync: Date?) async throws -> [Song]
+    /// 取用户的收藏曲目（最多 `limit` 首）。
+    ///
+    /// 原先还有一个 `since:` 参数，声称做「增量同步」。**它是个空参数** ——
+    /// 实现里直接 `return true` 放行全部，配一句 `FIXME`。而那 `FIXME` 的理由
+    /// （「`Song` 不暴露 dateAdded」）**本身就是错的**：`Song.libraryAddedDate`
+    /// 从 iOS 16 就有。
+    ///
+    /// 真正的问题是**语义**：调用方（管线的 Step 2）要的是**全量**收藏 ——
+    /// 排除集合、画像统计、收藏抽样全都建立在「他有什么」之上。把 `since:`
+    /// 实现成增量过滤，只会让那一次调用拿到「最近新增的几首」，把前面三样一起毁掉。
+    /// 所以正确的修法是**删掉这个参数**，而不是实现它。
+    func fetchLibrarySongs(limit: Int) async throws -> [Song]
+
+    /// 按**目录 ID** 定向查回资料库里的这几首。
+    ///
+    /// 用于隐式信号：只关心「我们推荐过的那几十首现在在不在库里」，
+    /// 不值得为此拉全量收藏（`limit` 上限会漏掉曲库很大的用户）。
+    ///
+    /// `Song.id` 在资料库请求里就是目录 ID（管线全程如此使用它做去重键），
+    /// 所以这里可以直接用我们持久化的那套 ID 过滤。
+    func fetchLibrarySongs(ids: [String]) async throws -> [Song]
 
     /// Fetch the user's recently played songs (track-level).
     /// - Note: Runtime may return empty for non-subscribers / fresh accounts;
@@ -66,28 +82,20 @@ final class MusicKitService: MusicKitServiceProtocol {
         return current
     }
 
-    func fetchLibrarySongs(limit: Int, since lastSync: Date?) async throws -> [Song] {
+    func fetchLibrarySongs(limit: Int) async throws -> [Song] {
         var request = MusicLibraryRequest<Song>()
         request.limit = limit
-
-        // Sort by date added (newest first) and filter incrementally
         let response = try await request.response()
-        var songs = Array(response.items)
+        return Array(response.items)
+    }
 
-        // Apply incremental filter if we have a last sync date
-        if let lastSync {
-            // MusicLibraryRequest doesn't support date filtering natively,
-            // so we fetch all and filter client-side. For MVP volumes this is fine.
-            songs = songs.filter { song in
-                // Note: Song doesn't expose a 'dateAdded' property directly in
-                // the modern MusicKit API. We do a full fetch for MVP and rely
-                // on the caller to handle dedup via lastSyncDate.
-                return true
-            }
-            // FIXME: When MusicKit API stabilizes, add proper incremental filtering.
-        }
-
-        return songs
+    func fetchLibrarySongs(ids: [String]) async throws -> [Song] {
+        guard !ids.isEmpty else { return [] }
+        var request = MusicLibraryRequest<Song>()
+        request.filter(matching: \.id, memberOf: ids.map { MusicItemID($0) })
+        request.limit = ids.count
+        let response = try await request.response()
+        return Array(response.items)
     }
 
     func fetchRecentlyPlayedSongs(limit: Int) async throws -> [Song] {

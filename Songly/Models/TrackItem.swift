@@ -43,6 +43,29 @@ struct TrackInfo: Codable, Equatable, Sendable {
     /// schema（迁移风险直接消失），而且「撤销删除」天然可行 —— 把这个字段
     /// 清掉，歌就回到列表里，不必记住它原本属于哪份歌单。
     var verdict: TrackVerdict? = nil
+
+    /// 判定写下的时刻。`nil` = 未表态，或表态已被撤销。
+    ///
+    /// 为什么需要它：在此之前，一个判定的先后只能靠「它在哪份记录里」间接推断
+    /// （见 `FeedbackStore.derive()` 的「已按 date 降序 → 新的判定先到先得」）。
+    /// 同一份歌单**之内**的先后则完全不可知 —— 而那正是「推荐后第几天才被收藏」
+    /// 这类时间序列分析所依赖的东西。同样是 `var` + 默认值，零迁移。
+    var verdictUpdatedAt: Date? = nil
+
+    /// **我们**把这首歌加进用户资料库的时刻。`nil` = 我们没加过。
+    ///
+    /// 存在的理由是一个真实的漏洞：`love(_:)` 是 toggle，用户把三周前的「超赞」取消后
+    /// `verdict` 变回 `nil`，但那首歌还在资料库里 —— 是**我们**放进去的。
+    /// 没有这个字段，「他在资料库里」就会被误读成「他自己收藏的」，白送一个正向信号。
+    ///
+    /// 与 `verdict` 同一套路：`var` + 默认值，写在 `tracksJSON` 里，零 SwiftData 迁移。
+    var librarySyncedAt: Date? = nil
+
+    /// 他被发现从我们建的歌单里**自己删掉**了这首歌的时刻（隐式负面信号）。
+    ///
+    /// 必须持久化：不落盘的话，这条排除会在记录滚出回看窗口时蒸发 ——
+    /// 那正是「删除应当永久生效」这条设计存在的意义。
+    var implicitRemovedAt: Date? = nil
 }
 
 // MARK: - TrackItem (LLM response)

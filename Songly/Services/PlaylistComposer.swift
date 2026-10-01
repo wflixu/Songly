@@ -33,10 +33,15 @@ enum PlaylistComposer {
         var removedKeys: Set<TrackKey> = []
     }
 
-    /// 允许放宽哪些排除项。三级递进，只在候选不足时逐级启用。
+    /// 允许放宽哪些排除项。逐级递进，只在候选不足时启用下一级。
     struct Relaxation: Equatable, Sendable {
         var allowLibrary: Bool
         var allowRecentlyPlayed: Bool
+        /// 允许「近 `AppConfig.artistBlockedWithinDays` 天出现过的艺人」。
+        ///
+        /// 放行之后这些艺人并不是无限制的，只是从「0 首」回到「1 首」
+        /// —— 见 `Input.artistCap(for:allowingRecent:)`。
+        var allowRecentArtist: Bool
         var allowAlreadyRecommended: Bool
         /// 只有上一轮结果**低于**这个数，才值得尝试本轮。
         var entryThreshold: Int
@@ -44,28 +49,43 @@ enum PlaylistComposer {
         /// 正常路径：全部排除项生效。
         static let strict = Relaxation(
             allowLibrary: false, allowRecentlyPlayed: false,
-            allowAlreadyRecommended: false, entryThreshold: Int.max
+            allowRecentArtist: false, allowAlreadyRecommended: false,
+            entryThreshold: Int.max
         )
         /// 允许与曲库重叠。
         static let libraryOverlap = Relaxation(
             allowLibrary: true, allowRecentlyPlayed: false,
-            allowAlreadyRecommended: false, entryThreshold: AppConfig.minAcceptableTrackCount
+            allowRecentArtist: false, allowAlreadyRecommended: false,
+            entryThreshold: AppConfig.minAcceptableTrackCount
         )
         /// 再允许最近播放过的。
         static let libraryAndRecent = Relaxation(
             allowLibrary: true, allowRecentlyPlayed: true,
-            allowAlreadyRecommended: false, entryThreshold: AppConfig.minAcceptableTrackCount
+            allowRecentArtist: false, allowAlreadyRecommended: false,
+            entryThreshold: AppConfig.minAcceptableTrackCount
+        )
+        /// 再允许「近 3 天出现过的艺人」。
+        ///
+        /// **排在 `everything` 之前**：它不是最后手段。宁可让一位三天内出现过的
+        /// 艺人再来一首（换首歌，不是重复那首），也不要把十四天内推过的**同一首**
+        /// 重新塞回去 —— 后者的伤害大得多。
+        static let recentArtistOverlap = Relaxation(
+            allowLibrary: true, allowRecentlyPlayed: true,
+            allowRecentArtist: true, allowAlreadyRecommended: false,
+            entryThreshold: AppConfig.minAcceptableTrackCount
         )
         /// 最后手段：连"近期已推荐过"也放开。
         /// 只在否则连 `publishableTrackCount` 都够不到时才启用 —— 宁可少几首，
         /// 也不要给用户重推三天前刚推过的歌。
         static let everything = Relaxation(
             allowLibrary: true, allowRecentlyPlayed: true,
-            allowAlreadyRecommended: true, entryThreshold: AppConfig.publishableTrackCount
+            allowRecentArtist: true, allowAlreadyRecommended: true,
+            entryThreshold: AppConfig.publishableTrackCount
         )
 
         static let ladder: [Relaxation] = [
-            .strict, .libraryOverlap, .libraryAndRecent, .everything,
+            .strict, .libraryOverlap, .libraryAndRecent,
+            .recentArtistOverlap, .everything,
         ]
     }
 
@@ -75,6 +95,9 @@ enum PlaylistComposer {
         case alreadyRecommended
         case recentlyPlayed
         case inLibrary
+        /// 这位艺人近 `AppConfig.artistBlockedWithinDays` 天内已经出现过。
+        /// **可放宽**（`Relaxation.recentArtistOverlap`），与 `userRemoved` 不同。
+        case recentArtist
         case contentType(ContentRejection)
         case artistCapped
         /// 用户在这份歌单里明确删掉的歌。**永不选回**。
@@ -90,6 +113,7 @@ enum PlaylistComposer {
             case .alreadyRecommended: return "already_recommended"
             case .recentlyPlayed: return "recently_played"
             case .inLibrary: return "in_library"
+            case .recentArtist: return "recent_artist"
             case .contentType(let reason): return "content_\(reason.rawValue)"
             case .artistCapped: return "artist_capped"
             case .userRemoved: return "user_removed"
@@ -118,6 +142,17 @@ enum PlaylistComposer {
         /// 主艺人 → 最近 N 天的出现次数。层内排序靠前，这是"每天都是同几个艺人"
         /// 的真正解药 —— 单次歌单内的上限治不了跨天重复。
         var recentArtistCounts: [String: Int] = [:]
+        /// 主艺人 → 最近一次出现在推荐里的日期。
+        ///
+        /// 与 `recentArtistCounts` 是**两件事**：那个只关心「出现过几次」，用于层内
+        /// 排序；这个关心「最后一次是几天前」—— 三档闸门必须知道后者，
+        /// 次数区分不了「3 天前 1 次」和「6 天前 1 次」，而这两档的处理完全不同。
+        var recentArtistLastSeen: [String: Date] = [:]
+        /// 判定「最近出现」的基准时刻。
+        ///
+        /// **注入而不是就地取 `Date()`** —— 与 `randomSeed` 同一理由：确定性是这套
+        /// 东西的卖点，测试必须能把「现在」钉死，否则闸门用例会隔天翻车。
+        var now: Date = Date()
         /// 主艺人 → 用户反馈权重（超赞为正、删除为负）。
         ///
         /// ⚠️ 这**只是层内排序**，挡不住任何东西：`takeNext` 会把整条队列走完，
@@ -126,6 +161,22 @@ enum PlaylistComposer {
         var artistWeights: [String: Int] = [:]
         /// 稳定随机种子（由 `yyyyMMdd + scene` 派生）。注入以便测试。
         var randomSeed: UInt64 = 0
+
+        /// 本轮这位艺人的取数上限。三档，阈值见 `AppConfig.artistBlockedWithinDays`。
+        ///
+        /// - Parameter allowingRecent: 放宽路径下，被闸门挡住的艺人回到「最多 1 首」，
+        ///   而**不是**变成无限制 —— 三天内刚出现过，不该在下一份歌单里再占两个位置。
+        func artistCap(for artist: String, allowingRecent: Bool) -> Int {
+            guard let lastSeen = recentArtistLastSeen[artist] else { return maxPerArtist }
+            let days = lastSeen.wholeDays(to: now)
+            if days <= AppConfig.artistBlockedWithinDays {
+                return allowingRecent ? 1 : 0
+            }
+            if days <= AppConfig.artistCooldownDays {
+                return 1
+            }
+            return maxPerArtist
+        }
     }
 
     struct Output: Sendable, Equatable {
@@ -217,6 +268,16 @@ enum PlaylistComposer {
     ) -> Attempt {
         var rejections: [Rejection] = []
 
+        // 本轮每位艺人的取数上限（0 / 1 / maxPerArtist）。只在池子里出现过的艺人上算，
+        // 不必遍历整个 `recentArtistLastSeen`。
+        var artistCaps: [String: Int] = [:]
+        for artist in Set(unique.map(\.primaryArtist)) {
+            artistCaps[artist] = input.artistCap(
+                for: artist,
+                allowingRecent: relaxation.allowRecentArtist
+            )
+        }
+
         // ---- S3 + S4：开池 ----
         var open: [ResolvedCandidate] = []
         open.reserveCapacity(unique.count)
@@ -261,6 +322,17 @@ enum PlaylistComposer {
                 continue
             }
 
+            // S3b：跨天艺人闸门 —— 这位艺人近 3 天已经出现过。
+            //
+            // **刻意排在所有可放宽闸门的最后。** 前面几条（已推荐过 / 最近播放 /
+            // 在曲库里）是既有指标，它们的计数要能与历史数据（算法版本 3 及之前）
+            // 横向对比；新闸门若排在前面，会把归因从它们身上抢走，让版本对比失真。
+            // 这条正好也是第 5 项刚落地的「版本可比性」在起作用。
+            if artistCaps[candidate.primaryArtist] == 0 {
+                rejections.append(Rejection(info: info, reason: .recentArtist))
+                continue
+            }
+
             open.append(candidate)
         }
 
@@ -293,7 +365,9 @@ enum PlaylistComposer {
                 index += 1
 
                 let artist = candidate.primaryArtist
-                if (artistCounts[artist] ?? 0) >= input.maxPerArtist {
+                // 上限按艺人分档（0 / 1 / maxPerArtist），不再是全局的 maxPerArtist。
+                let cap = artistCaps[artist] ?? input.maxPerArtist
+                if (artistCounts[artist] ?? 0) >= cap {
                     rejections.append(Rejection(info: candidate.info, reason: .artistCapped))
                     continue
                 }

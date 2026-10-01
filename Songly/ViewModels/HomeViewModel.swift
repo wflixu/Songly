@@ -34,9 +34,6 @@ final class HomeViewModel {
     private(set) var authStatus: AuthStatus
     private(set) var notificationAuthorized = false
 
-    /// 设置 sheet 的呈现开关。
-    var showSettings = false
-
     private let engine: RecommendationEngine
     private let networkMonitor: NetworkMonitor
     private let modelContainer: ModelContainer
@@ -274,6 +271,14 @@ final class HomeViewModel {
         let today = calendar.startOfDay(for: Date())
 
         var descriptor = FetchDescriptor<RecommendationRecord>(
+            // 只取已完成的 —— 这与 `loadTodayRecord` / `PlaylistHistoryView` 的口径一致。
+            //
+            // `failed` 记录（未建出歌单）与 `pending` 记录（进程在落库与建歌单之间
+            // 被杀，永远收不了尾）都不该出现在「最近」里：点进去会是一份 Apple Music
+            // 中并不存在的歌单。取 10 再筛 3 的写法对这两类记录没有免疫力。
+            predicate: #Predicate<RecommendationRecord> { record in
+                record.status == "completed"
+            },
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         descriptor.fetchLimit = 10

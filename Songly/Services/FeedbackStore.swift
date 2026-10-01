@@ -84,6 +84,13 @@ final class FeedbackStore {
         var removedIDs: Set<String> = []
         /// 永久排除：归一化文本键（用于跨 ID 口径的兜底匹配）。
         var removedKeys: Set<TrackKey> = []
+        /// 隐式排除：他被发现从**我们建的歌单里**自己删掉的歌。
+        ///
+        /// 与显式的 `removedIDs` 走同一个「永不放宽」出口（它同样是刚性的用户意志），
+        /// 但**分开存** —— 诊断日志要能回答「这个闸门挡了多少次」，混在一起就分不清
+        /// 「他删了多少」和「他删了多少次 App 里的」。
+        var implicitRemovedIDs: Set<String> = []
+        var implicitRemovedKeys: Set<TrackKey> = []
         /// 主艺人 → 权重。正数上浮，负数下沉。已夹取。
         var artistWeights: [String: Int] = [:]
         var summary: FeedbackSummary = .empty
@@ -91,7 +98,11 @@ final class FeedbackStore {
 
     /// 排除了多少首歌算「足够强」的信号 —— 超出部分夹取，避免刷屏式反馈
     /// 把某个艺人一路顶到排序最前。
-    private static let weightRange = -5...5
+    /// 艺人权重的全局上下限。**不是 private** —— 隐式信号合并后要夹到同一个范围，
+    /// 两处各写一个数字迟早会漂移。
+    /// `nonisolated`：它是个常量，而 `@MainActor` 会把静态成员一并隔离 ——
+    /// 那样 `ImplicitSignalClassifier`（纯函数、非主线程）就读不到它了。
+    nonisolated static let weightRange = -5...5
     private static let maxLovedSongs = 15
     private static let maxLovedArtists = 12
     private static let maxRemovedSongs = 15
@@ -125,6 +136,19 @@ final class FeedbackStore {
                 // 那是「改主意了」的自然语义。
                 if let verdict = track.verdict, result.verdicts[track.id] == nil {
                     result.verdicts[track.id] = verdict
+                }
+
+                // 隐式负面：他后来从我们建的歌单里自己删掉了这首歌。
+                //
+                // **不改 `FeedbackSummary`** —— 那是「他明确说了什么」的渲染，
+                // 往里塞一条我们自己推断的东西，就是让 prompt 去对模型撒谎。
+                // 隐式信号的措辞与归因在 `ImplicitSignals.promptBlock` 里单独讲。
+                // 开关在这里判而不是在写入端判：写入端照常留痕（观测数据本身有价值），
+                // 由这里决定它**生不生效** —— 这样以后翻开关，历史数据会一起跟着变。
+                if AppConfig.treatPlaylistRemovalAsPermanent,
+                   track.implicitRemovedAt != nil, track.verdict == nil {
+                    result.implicitRemovedIDs.insert(track.id)
+                    result.implicitRemovedKeys.insert(track.key)
                 }
 
                 switch track.verdict {
@@ -194,6 +218,9 @@ final class FeedbackStore {
         guard previous != verdict else { return true }
 
         tracks[index].verdict = verdict
+        // 撤销（`verdict == nil`）时一并清掉时间戳 —— 留着一个「已撤销的判定时刻」，
+        // 下游会以为它还是个有效信号。
+        tracks[index].verdictUpdatedAt = verdict == nil ? nil : Date()
         record.tracks = tracks
 
         switch (previous, verdict) {
@@ -211,8 +238,43 @@ final class FeedbackStore {
         return true
     }
 
+    /// 记下「**我们**把这首歌加进了他的资料库」。
+    ///
+    /// 必须在入库成功后调用。没有它，`TrackInfo.librarySyncedAt` 永远是 nil，
+    /// 而「这首歌现在在他库里」就会被隐式信号误读成「他自己收的」——
+    /// 白送一个正向信号，且是从我们自己的动作里凭空造出来的。
+    ///
+    /// 幂等：已经有时间戳就不覆盖（第一次写入才是「我们加进去」的真实时刻）。
+    @discardableResult
+    func markLibrarySynced(songID: String, in record: RecommendationRecord) -> Bool {
+        var tracks = record.tracks
+        guard let index = tracks.firstIndex(where: { $0.id == songID }) else { return false }
+        guard tracks[index].librarySyncedAt == nil else { return true }
+        tracks[index].librarySyncedAt = Date()
+        record.tracks = tracks
+        try? context.save()
+        return true
+    }
+
+    /// 记下「他被发现从我们建的歌单里删掉了这首歌」。
+    ///
+    /// 落盘而不是每次重算：不落盘的话，这条排除会在记录滚出回看窗口时**蒸发** ——
+    /// 而「删除应当永久生效」正是这套东西的设计前提。
+    @discardableResult
+    func markImplicitRemoved(songID: String, in record: RecommendationRecord) -> Bool {
+        var tracks = record.tracks
+        guard let index = tracks.firstIndex(where: { $0.id == songID }) else { return false }
+        guard tracks[index].implicitRemovedAt == nil else { return true }
+        tracks[index].implicitRemovedAt = Date()
+        record.tracks = tracks
+        try? context.save()
+        return true
+    }
+
     func setRating(_ rating: PlaylistRating?, on record: RecommendationRecord) {
         record.rating = rating?.rawValue
+        // 与 `setVerdict` 同理：取消评价时把时刻也清掉。
+        record.ratedAt = rating == nil ? nil : Date()
         try? context.save()
     }
 

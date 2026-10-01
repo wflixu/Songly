@@ -214,6 +214,37 @@ struct PromptBuilderV3Tests {
         #expect(message.contains("夜晚"))
     }
 
+    @Test("被跨天闸门挡掉的艺人写进用户消息 —— 省得模型把 seed 浪费在注定被拒的方向")
+    func blockedArtistsAreAnnounced() {
+        let scene = SceneContext.sensed(at: instant(hour: 9), calendar: shanghaiCalendar)
+        let message = PromptBuilderV3.firstUserMessage(
+            scene: scene, now: instant(hour: 9),
+            librarySample: [], stats: nil,
+            recentlyPlayed: [], topPlayed: [], recentlyRecommended: [],
+            blockedArtists: ["周杰伦", "陈奕迅"],
+            seedTargets: PromptBuilderV3.seedTargets(for: 25),
+            calendar: shanghaiCalendar
+        )
+
+        #expect(message.contains("周杰伦"))
+        #expect(message.contains("陈奕迅"))
+        #expect(message.contains("本轮不会再选"))
+    }
+
+    @Test("没有近期艺人时这一节整块省略 —— 无信号的消息与改造前逐字节相同")
+    func noBlockedArtistsNoSection() {
+        let scene = SceneContext.sensed(at: instant(hour: 9), calendar: shanghaiCalendar)
+        let message = PromptBuilderV3.firstUserMessage(
+            scene: scene, now: instant(hour: 9),
+            librarySample: [], stats: nil,
+            recentlyPlayed: [], topPlayed: [], recentlyRecommended: [],
+            seedTargets: PromptBuilderV3.seedTargets(for: 25),
+            calendar: shanghaiCalendar
+        )
+
+        #expect(!message.contains("不会再选"))
+    }
+
     @Test("情境区块给出能量、速度与要避开的雷")
     func sceneBlockCarriesDirection() {
         let scene = SceneContext.sensed(at: instant(hour: 23), calendar: shanghaiCalendar)

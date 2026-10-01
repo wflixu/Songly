@@ -50,6 +50,15 @@ extension DateFormatter {
 }
 
 extension Date {
+    /// 「从 `self` 到 `other` 过了几个整天」，按日历算，不足一天记 0。
+    ///
+    /// 跨天艺人闸门用它判定「这位艺人最近一次出现在几天前」。
+    /// 刻意按**整天**而不是 24 小时段：昨晚 23:00 出现过、今早 01:00 生成，
+    /// 中间只隔 2 小时 —— 那显然算「刚出现过」，不该因为不足 24 小时被放过。
+    nonisolated func wholeDays(to other: Date, calendar: Calendar = .current) -> Int {
+        calendar.dateComponents([.day], from: self, to: other).day ?? 0
+    }
+
     /// "7月13日" format.
     nonisolated var chineseDateString: String {
         DateFormatter.chineseDate.string(from: self)

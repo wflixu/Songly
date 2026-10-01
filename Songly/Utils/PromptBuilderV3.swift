@@ -49,6 +49,9 @@ enum PromptBuilderV3 {
     static let recentlyPlayedLines = 30
     static let topPlayedLines = 20
     static let excludedHistoryLines = 40
+    /// 被跨天艺人闸门挡掉的艺人名上限。超出的部分截掉 —— 这一节是**提示**，
+    /// 真正的闸门在 composer 里，不需要把整份名单念给模型听。
+    static let blockedArtistNames = 30
 
     // MARK: - System Prefix
 
@@ -120,6 +123,21 @@ enum PromptBuilderV3 {
         recentlyPlayed: [PromptTrack],
         topPlayed: [PromptTrack],
         recentlyRecommended: [PromptTrack],
+        /// 从 Apple Music 行为推断出来的弱信号。
+        ///
+        /// ⚠️ **刻意放在 `userMessage` 而不是 `systemPrefix`。** 语义上：`systemPrefix`
+        /// 是「这位用户是谁」的耐久事实，而这是「他最近干了什么」—— 与 `## 最近在听`
+        /// 同类。工程上：`systemPrefix` 一行不动，`FeedbackSummary.promptBlock` 照旧是
+        /// 它最后一块，既有的字节稳定性断言全部继续成立。
+        ///
+        /// （单看 DeepSeek 前缀缓存，两处其实**等价** —— `userMessage` 里的 `now`
+        /// 本来就每天在变，跨天缓存从那里起注定失效。决定因素是语义分层，不是缓存。）
+        implicitSignals: ImplicitSignals = .empty,
+        /// 近 `AppConfig.artistBlockedWithinDays` 天已经出现过的艺人。
+        ///
+        /// 不传也能跑（composer 那层照样挡得住），但模型会白白把 seed 浪费在
+        /// 注定被拒的艺人身上 —— 45 条 seed 里浪费几条，解析率就掉几个点。
+        blockedArtists: [String] = [],
         seedTargets: [DiscoveryTier: Int],
         quickPickStyle: QuickPickStyle? = nil,
         calendar: Calendar = .current
@@ -160,6 +178,18 @@ enum PromptBuilderV3 {
             sections.append(
                 "## 最近反复播放\n"
                 + numbered(Array(topPlayed.prefix(topPlayedLines)))
+            )
+        }
+
+        if let block = implicitSignals.promptBlock {
+            sections.append(block)
+        }
+
+        if !blockedArtists.isEmpty {
+            sections.append(
+                "## 近 \(AppConfig.artistBlockedWithinDays) 天出现过的艺人（本轮不会再选，不要提）\n"
+                + blockedArtists.prefix(blockedArtistNames).joined(separator: "、")
+                + "\n（同一位艺人短期内连着出现会让歌单显得重复。请换别的方向。）"
             )
         }
 

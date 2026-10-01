@@ -41,7 +41,7 @@ final class TasteProfileRefresher {
         defer { isRunning = false }
 
         guard let songs = try? await musicKit.fetchLibrarySongs(
-            limit: AppConfig.maxLibrarySongs, since: nil
+            limit: AppConfig.maxLibrarySongs
         ), !songs.isEmpty else { return }
 
         let fingerprint = LibraryFingerprint.make(from: songs.map { $0.id.rawValue })

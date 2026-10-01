@@ -223,7 +223,20 @@ struct PlaylistDetailView: View {
 
         do {
             let outcome = try await libraryService.addToLibrary(songID: songID)
-            if outcome == .alreadyOwned {
+            if outcome == .added {
+                // 记下「**我们**把这首歌放进了他的资料库」。
+                //
+                // 隐式信号会把「这首歌在他库里 + 入库时间落在推荐之后」读成
+                // 「他自己收的」—— 没有这个标记，**我们自己的写入会凭空造出一个
+                // 正向信号**，而且它还会顺势给这个艺人加权。
+                //
+                // 只在 `.added` 时记。`.alreadyOwned` 说明它本来就在库里
+                // （或者是我们上一轮加的，两者无法区分）—— 那种情况交给
+                // `libraryAddedDate` 的时间比对去挡：本来就在库里的歌，入库时间远早于
+                // 这次推荐，天然不满足「推荐之后」。这也正是第 214 行那条注释
+                // 所担心的歧义，现在它有了一个精确的出口。
+                FeedbackStore(context: modelContext).markLibrarySynced(songID: songID, in: record)
+            } else {
                 #if DEBUG
                 print("[Songly] 这首歌本来就在资料库里，跳过添加")
                 #endif

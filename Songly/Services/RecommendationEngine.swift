@@ -36,6 +36,34 @@ enum EngineError: LocalizedError {
     }
 }
 
+// MARK: - Artist Recency
+
+/// 「这位艺人最近什么时候出现过」—— 跨天闸门的输入。
+///
+/// 与 `recentArtistCounts`（热度，用于层内排序）是**两件事**：那个数次数，这个记日期。
+/// 次数区分不了「3 天前 1 次」和「6 天前 1 次」，而这两档一个是禁、一个是限 1 首。
+struct ArtistRecencySignals: Sendable {
+    /// 归一化艺人 key → 最近一次出现在推荐里的日期。
+    var lastSeen: [String: Date] = [:]
+    /// 归一化艺人 key → 展示用艺人名（取自最近那条记录）。
+    ///
+    /// key 是**小写化过**的，直接喂给 prompt 会是 `taylor swift` 这种写法，
+    /// 所以另存一份原始写法。
+    var displayNames: [String: String] = [:]
+
+    /// 本轮会被硬闸门挡掉的艺人展示名。
+    ///
+    /// 只报**第一档**（近 `artistBlockedWithinDays` 天）—— 第二档（4–14 天）只是
+    /// 限到 1 首，不是「不能提」，写进 prompt 会让模型白白放弃一个可用方向。
+    func blockedDisplayNames(now: Date) -> [String] {
+        lastSeen
+            .filter { $0.value.wholeDays(to: now) <= AppConfig.artistBlockedWithinDays }
+            .keys
+            .compactMap { displayNames[$0] }
+            .sorted()
+    }
+}
+
 // MARK: - Engine
 
 actor RecommendationEngine {
@@ -44,6 +72,7 @@ actor RecommendationEngine {
     private let playlistService: PlaylistServiceProtocol
     private let catalogResolver: CatalogResolving
     private let tasteProfileStore: TasteProfileStore
+    private let implicitDetector: ImplicitSignalDetecting
     private let modelContainer: ModelContainer
 
     private var isRunning = false
@@ -55,6 +84,9 @@ actor RecommendationEngine {
         playlistService: PlaylistServiceProtocol,
         catalogResolver: CatalogResolving,
         tasteProfileStore: TasteProfileStore = TasteProfileStore(),
+        /// 隐式信号检测器。给默认值是为了让既有测试与预览继续编译 ——
+        /// 换测试替身时从这里注入。
+        implicitDetector: ImplicitSignalDetecting = ImplicitSignalDetector(),
         modelContainer: ModelContainer
     ) {
         self.musicKitService = musicKitService
@@ -62,6 +94,7 @@ actor RecommendationEngine {
         self.playlistService = playlistService
         self.catalogResolver = catalogResolver
         self.tasteProfileStore = tasteProfileStore
+        self.implicitDetector = implicitDetector
         self.modelContainer = modelContainer
     }
 
@@ -197,10 +230,7 @@ actor RecommendationEngine {
         await reportState(.readingLibrary)
         let songs: [Song]
         do {
-            songs = try await musicKitService.fetchLibrarySongs(
-                limit: AppConfig.maxLibrarySongs,
-                since: await fetchLastSyncDate()
-            )
+            songs = try await musicKitService.fetchLibrarySongs(limit: AppConfig.maxLibrarySongs)
         } catch {
             if Task.isCancelled { return }
             await reportState(.error(message: "读取收藏失败", retryable: true))
@@ -212,7 +242,6 @@ actor RecommendationEngine {
             await reportState(.error(message: "收藏列表为空", retryable: false))
             return
         }
-        await updateLastSyncDate()
 
         // ---- Step 3: Signals（可降级、各自超时、并发）----
         async let recentlyPlayedTask = withTimeout(AppConfig.contextTimeout) {
@@ -221,8 +250,28 @@ actor RecommendationEngine {
         async let topPlayedTask = withTimeout(AppConfig.contextTimeout) {
             try await self.musicKitService.fetchTopPlayedSongs(limit: AppConfig.topPlayedLimit)
         }
+        // ---- Step 3.5: 隐式信号（回读 Apple Music 里的实际行为）----
+        //
+        // 与 Step 3 并发：8 秒预算必须与那 3 秒的上下文取数**重叠**，而不是叠加。
+        // 候选收集要读记录（主线程，很快），网络部分走后台 —— 分工见 `ImplicitCandidate`。
+        let implicitInput = await collectImplicitInput()
+        async let implicitTask = withTimeout(AppConfig.implicitSignalTimeout) {
+            await self.implicitDetector.observe(implicitInput.candidates, playlists: implicitInput.playlists)
+        }
+
         let recentlyPlayed = await recentlyPlayedTask ?? []
         let topPlayed = await topPlayedTask ?? []
+        let implicitObservation = await implicitTask ?? .empty
+        if Task.isCancelled { return }
+
+        // 分类：把「原始事实」变成权重与硬排除。纯函数，可整天单测。
+        let implicitSignals = ImplicitSignalClassifier.classify(
+            implicitInput.candidates, observation: implicitObservation
+        )
+        // 「他删掉了」必须**落盘** —— 不落盘，这条排除会在记录滚出回看窗口时蒸发，
+        // 而「删除应当永久生效」正是这套东西的设计前提。
+        await persistImplicitRemovals(implicitSignals)
+        if Task.isCancelled { return }
 
         // ---- Step 4: Scene + Profile + Feedback + Exclusions ----
         // 风格模式下情境仍作为背景，只是优先级低于用户点名的风格。
@@ -231,13 +280,25 @@ actor RecommendationEngine {
         // 读一次反馈，同时供三层使用：硬排除（删掉的歌）、层内排序（艺人权重）、
         // prompt（明确的好恶）。见 `FeedbackStore.Derived`。
         let feedback = await deriveFeedback()
+        // 显式与隐式合并成一份权重。隐式那侧已经在分类器里夹过一次，
+        // 这里合并后再夹到全局范围 —— 两步夹取的理由见 `mergeArtistWeights`。
+        let artistWeights = Self.mergeArtistWeights(
+            explicit: feedback.artistWeights,
+            implicit: implicitSignals.artistWeights
+        )
         let exclusions = await makeExclusions(
             songs: songs,
             recentlyPlayed: recentlyPlayed,
             source: source,
-            feedback: feedback
+            feedback: feedback,
+            implicitSignals: implicitSignals
         )
         let artistHeat = await recentArtistCounts(windowDays: AppConfig.artistRecencyWindowDays)
+        // 跨天艺人闸门的输入。与上面的 `artistHeat` 是两件事（一个是次数、一个是日期），
+        // 见 `ArtistRecencySignals` 的注释。
+        let artistRecency = await fetchArtistRecency()
+        // 本轮会被闸门挡掉的艺人 —— 喂给 prompt，省得模型把 seed 浪费在它们身上。
+        let blockedArtists = artistRecency.blockedDisplayNames(now: startedAt)
 
         let historyForPrompt = await fetchRecentTrackInfos(
             windowDays: AppConfig.dedupWindowDays,
@@ -258,6 +319,8 @@ actor RecommendationEngine {
                 recentlyPlayed: recentlyPlayed.map { PromptTrack(title: $0.title, artist: $0.artistName) },
                 topPlayed: topPlayed.map { PromptTrack(title: $0.title, artist: $0.artistName) },
                 recentlyRecommended: historyForPrompt,
+                implicitSignals: implicitSignals,
+                blockedArtists: blockedArtists,
                 seedTargets: seedTargets,
                 quickPickStyle: quickPickStyle
             )
@@ -268,7 +331,8 @@ actor RecommendationEngine {
         var songsByID: [String: Song] = [:]
         var composition = PlaylistComposer.compose(Self.composerInput(
             candidates: accumulated, exclusions: exclusions,
-            artistHeat: artistHeat, artistWeights: feedback.artistWeights,
+            artistHeat: artistHeat, artistWeights: artistWeights,
+            artistLastSeen: artistRecency.lastSeen, now: startedAt,
             quickPick: quickPickStyle != nil
         ))
 
@@ -360,11 +424,14 @@ actor RecommendationEngine {
                 failureReasons[failure.reason, default: 0] += 1
             }
 
-            composition = PlaylistComposer.compose(Self.composerInput(
+            // 留一份给 `artistsAtCap` —— 上限是分档的，判定必须用同一份输入。
+            let composerState = Self.composerInput(
                 candidates: accumulated, exclusions: exclusions,
-                artistHeat: artistHeat, artistWeights: feedback.artistWeights,
+                artistHeat: artistHeat, artistWeights: artistWeights,
+                artistLastSeen: artistRecency.lastSeen, now: startedAt,
                 quickPick: quickPickStyle != nil
-            ))
+            )
+            composition = PlaylistComposer.compose(composerState)
 
             let decision = GapRoundPlanner.decide(RoundState(
                 round: round,
@@ -372,7 +439,7 @@ actor RecommendationEngine {
                 resolvedThisRound: resolution.candidates.count,
                 newSeedsThisRound: response.seeds.count,
                 failedSeeds: resolution.failures,
-                artistsAtCap: Self.artistsAtCap(composition),
+                artistsAtCap: Self.artistsAtCap(composition, input: composerState),
                 elapsed: Date().timeIntervalSince(startedAt),
                 isCancelled: false
             ))
@@ -391,7 +458,12 @@ actor RecommendationEngine {
             break
         }
 
-        Self.logDiagnostics(
+        // 诊断 payload **只构造一次**，供两个出口共用：DEBUG 打印 + 落库。
+        //
+        // ⚠️ 落库那条路绝不能跟着 `#if DEBUG` 走 —— 02:00 的后台任务跑的是
+        // Release 构建，而它恰恰是歌单的主要产出路径。跟着 DEBUG 走的话，
+        // 数据在 Release 下永远是空的，且不报错、只静默产出零数据。
+        let diagnostics = Self.diagnosticsPayload(
             rounds: roundsRun,
             stopReason: stopReason,
             seedsRequested: seedsRequested,
@@ -407,18 +479,33 @@ actor RecommendationEngine {
             failureReasons: failureReasons,
             albumExpansions: albumExpansions,
             rawSeedInput: rawSeedInput,
-            rejectionReasons: Self.rejectionBreakdown(composition.rejections)
+            rejectionReasons: Self.rejectionBreakdown(composition.rejections),
+            implicitCandidates: implicitInput.candidates.count,
+            implicitSignals: implicitSignals,
+            implicitObservation: implicitObservation
         )
+        Self.logDiagnostics(diagnostics)
+        let diagnosticsJSON = Self.encodeDiagnostics(diagnostics)
 
         // ---- Step 6: Gate ----
         //
         // 缺口没补上但够格发布时**照常发布** —— 20–24 首是好歌单，
         // 不值得为了凑满 25 让用户白等一轮。
         guard composition.publishable, !composition.tracks.isEmpty else {
-            await reportState(.error(
-                message: EngineError.insufficientCandidates(count: composition.tracks.count).localizedDescription,
-                retryable: true
-            ))
+            let message = EngineError
+                .insufficientCandidates(count: composition.tracks.count)
+                .localizedDescription
+            // **失败也要留痕。**「今天为什么没出歌单」恰恰是最需要数据的场景，
+            // 而在此之前这条路径是裸 `return`，什么都没留下 —— 用户只看到 App 没动静。
+            _ = await saveFailedRun(
+                date: startedAt,
+                source: source,
+                quickPickStyle: quickPickStyle,
+                reason: message,
+                tracks: composition.tracks.map(\.info),
+                diagnosticsJSON: diagnosticsJSON
+            )
+            await reportState(.error(message: message, retryable: true))
             return
         }
 
@@ -466,7 +553,12 @@ actor RecommendationEngine {
             playlistName: playlistName,
             // 只给每日推荐记场景。QuickPick 的身份是用户点名的那个风格，
             // 记上「深夜」会让卡片的场景带写着与内容不符的由来。
-            scene: quickPickStyle == nil ? scene.scene.rawValue : nil
+            scene: quickPickStyle == nil ? scene.scene.rawValue : nil,
+            // 版本标识 —— 没有它，这一行数据在算法改版后就无法归入任何批次。
+            pipelineVersion: AppConfig.pipelineVersion,
+            promptVersion: AppConfig.promptVersion,
+            modelID: AppConfig.deepseekModel,
+            diagnosticsJSON: diagnosticsJSON
         ) else {
             await reportState(.error(message: "数据保存失败，请稍后重试", retryable: true))
             return
@@ -484,7 +576,17 @@ actor RecommendationEngine {
                 songs: matchedSongs
             )
         } catch {
-            _ = await deleteRecommendation(modelID: modelID)
+            // **保留这条记录**并标记为失败，而不是删掉它。
+            //
+            // 原先这里是 `deleteRecommendation` —— 于是「歌单没建成」这件事在数据上
+            // 彻底消失，用户只看到 App 没动静。它已经带着完整的曲目与诊断落过库了，
+            // 丢掉太可惜。
+            _ = await markRecommendationFailed(
+                modelID: modelID,
+                reason: "播放列表创建失败：\(error.localizedDescription)"
+            )
+            // 已是终态，取消路径不必（也不该）再删它。
+            pendingRecordID = nil
             await reportState(.error(message: "播放列表创建失败", retryable: true))
             return
         }
@@ -509,25 +611,58 @@ actor RecommendationEngine {
         exclusions: PlaylistComposer.ExclusionSet,
         artistHeat: [String: Int],
         artistWeights: [String: Int],
+        artistLastSeen: [String: Date],
+        now: Date,
         quickPick: Bool
     ) -> PlaylistComposer.Input {
         var input = PlaylistComposer.Input(candidates: candidates)
         input.exclusions = exclusions
         input.recentArtistCounts = artistHeat
         input.artistWeights = artistWeights
+        input.recentArtistLastSeen = artistLastSeen
+        input.now = now
         // QuickPick：用户已点名风格，不再套 70/20/10。
         input.tierQuotaEnabled = !quickPick
         return input
     }
 
-    /// 已达单份歌单上限的艺人 —— 回传给模型，避免它继续往同一个方向提。
-    private static func artistsAtCap(_ composition: PlaylistComposer.Output) -> [String] {
+    /// 显式反馈与隐式信号的艺人权重逐项相加，再夹到全局范围。
+    ///
+    /// **两步夹取是故意的。** 隐式那侧已经在 `ImplicitSignalClassifier` 里夹过一次
+    /// （`AppConfig.implicitArtistWeightRange`），这里合并后再夹到 `FeedbackStore.weightRange`。
+    /// 理由：15 个显式超赞已经能顶到 ±5，而隐式信号廉价易累积（每次播放、每次入库
+    /// 都可能加一笔）—— 不先夹一道，它们会把用户亲口说的那点分量冲淡。
+    private static func mergeArtistWeights(
+        explicit: [String: Int],
+        implicit: [String: Int]
+    ) -> [String: Int] {
+        var merged = explicit
+        for (artist, weight) in implicit {
+            merged[artist, default: 0] += weight
+        }
+        let range = FeedbackStore.weightRange
+        return merged.mapValues { min(max($0, range.lowerBound), range.upperBound) }
+    }
+
+    /// 已达本轮上限的艺人 —— 回传给模型，避免它继续往同一个方向提。
+    ///
+    /// **必须按 `input` 算，不能用全局的 `maxTracksPerArtist`。** 上限现在是分档的
+    /// （近 3 天出现过 → 0 首、4–14 天 → 1 首、更早 → 2 首），拿全局值判定会把
+    /// 「已经用满 1 首额度」的艺人漏报，模型于是继续往这个方向提 seed。
+    /// 用 `allowingRecent: false` 取**严格档**：告诉模型的是「正常情况下还能不能再给」，
+    /// 放宽是管线的兜底手段，不该让模型把它算进去。
+    private static func artistsAtCap(
+        _ composition: PlaylistComposer.Output,
+        input: PlaylistComposer.Input
+    ) -> [String] {
         var counts: [String: Int] = [:]
         for track in composition.tracks {
             counts[track.primaryArtist, default: 0] += 1
         }
         return counts
-            .filter { $0.value >= AppConfig.maxTracksPerArtist }
+            .filter { artist, count in
+                count >= input.artistCap(for: artist, allowingRecent: false)
+            }
             .keys
             .sorted()
     }
@@ -573,7 +708,8 @@ actor RecommendationEngine {
         songs: [Song],
         recentlyPlayed: [Song],
         source: String,
-        feedback: FeedbackStore.Derived
+        feedback: FeedbackStore.Derived,
+        implicitSignals: ImplicitSignals
     ) async -> PlaylistComposer.ExclusionSet {
         // 去重窗口是 source 感知的：daily 14 天、quick_pick 7 天，
         // 但**两者都进排除集合** —— 旧实现里 quick_pick 完全不参与去重，
@@ -593,10 +729,21 @@ actor RecommendationEngine {
             keys: Set(historyKeys),
             recentlyPlayedKeys: Set(recentlyPlayed.map(\.key)),
             libraryKeys: Set(songs.map(\.key)),
-            // 用户明确删掉的歌。**与上面几项不同，它不受放宽阶梯影响** ——
+            // 用户删掉的歌。**与上面几项不同，它不受放宽阶梯影响** ——
             // 用户说了不要，候选不够也不是把它塞回去的理由。
-            removedSongIDs: feedback.removedIDs,
+            //
+            // 三个来源并起来：
+            // - `removedIDs`：App 内「删除」；
+            // - `implicitRemovedIDs`：他从我们建的歌单里自己删掉的（`derive` 读的落盘值，
+            //   覆盖全部历史，含回看窗口之外的）；
+            // - `implicitSignals.removedIDs`：**本轮**刚发现的。与上一条重叠，但并上它
+            //   是为了**不依赖落盘成功** —— 存盘失败时这一轮的排除仍然生效。
+            removedSongIDs: feedback.removedIDs
+                .union(feedback.implicitRemovedIDs)
+                .union(implicitSignals.removedIDs),
             removedKeys: feedback.removedKeys
+                .union(feedback.implicitRemovedKeys)
+                .union(implicitSignals.removedKeys)
         )
     }
 
@@ -618,8 +765,12 @@ actor RecommendationEngine {
         #endif
     }
 
-    /// 每次运行打一份诊断 —— 这是"为什么这次只有 21 首"能被回答的前提。
-    private static func logDiagnostics(
+    /// 本次运行的完整诊断 payload —— 这是"为什么这次只有 21 首"能被回答的前提。
+    ///
+    /// **只构造、不输出。** 两个出口共用同一份：DEBUG 打印（`logDiagnostics`）
+    /// 与落库（`encodeDiagnostics` → `RecommendationRecord.diagnosticsJSON`）。
+    /// 为什么必须拆开，见 `encodeDiagnostics` 的注释。
+    private static func diagnosticsPayload(
         rounds: Int,
         stopReason: StopReason,
         seedsRequested: Int,
@@ -635,12 +786,14 @@ actor RecommendationEngine {
         failureReasons: [String: Int],
         albumExpansions: Int,
         rawSeedInput: String?,
-        rejectionReasons: [String: Int]
-    ) {
-        #if DEBUG
+        rejectionReasons: [String: Int],
+        implicitCandidates: Int,
+        implicitSignals: ImplicitSignals,
+        implicitObservation: ImplicitObservation
+    ) -> [String: Any] {
         var counts: [String: Int] = [:]
         for (tier, count) in composition.tierCounts { counts[tier.rawValue] = count }
-        let payload: [String: Any] = [
+        return [
             "rounds": rounds,
             "stop_reason": stopReason.rawValue,
             "seeds_requested": seedsRequested,
@@ -676,36 +829,62 @@ actor RecommendationEngine {
                 ? (Double(cacheReadTokens) / Double(inputTokens) * 100).rounded() / 100
                 : 0,
             "elapsed_s": (elapsed * 10).rounded() / 10,
+
+            // 隐式信号 —— 「完全后台」这个决定下，这里是它**唯一**的可观测性。
+            // `notes` 已在检测器里排序，保证同输入同字节。
+            "implicit": [
+                "candidates": implicitCandidates,
+                "starred": implicitSignals.starred.count,
+                "adopted": implicitSignals.adopted.count,
+                "listened": implicitSignals.listened.count,
+                "playlist_removed": implicitSignals.removedSongs.count,
+                "weighted_artists": implicitSignals.artistWeights.count,
+                "degraded": implicitObservation.degraded,
+                "notes": implicitObservation.notes,
+            ],
+
+            // 阈值快照。版本号只说「哪一版」，说不清「那一版用的是什么参数」——
+            // 改一个窗口天数不会 +1 版本号，结果却会变。把当次真正生效的值记下来，
+            // 历史数据才永远解释得通。
+            "config": [
+                "target_track_count": AppConfig.targetTrackCount,
+                "max_tracks_per_artist": AppConfig.maxTracksPerArtist,
+                "max_tracks_per_album": AppConfig.maxTracksPerAlbum,
+                "max_gap_rounds": AppConfig.maxGapRounds,
+                "dedup_window_days": AppConfig.dedupWindowDays,
+                "dedup_window_days_quick_pick": AppConfig.dedupWindowDaysQuickPick,
+                "artist_recency_window_days": AppConfig.artistRecencyWindowDays,
+                // 跨天艺人闸门的两档阈值。**必须进来** —— 它们直接改变选曲结果，
+                // 而只靠 `pipelineVersion` 说不清「这一版用的是 3 天还是 5 天」。
+                "artist_blocked_within_days": AppConfig.artistBlockedWithinDays,
+                "artist_cooldown_days": AppConfig.artistCooldownDays,
+                "reject_live_titles": AppConfig.rejectLiveTitles,
+            ],
         ]
-        if let data = try? JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys]),
-           let json = String(data: data, encoding: .utf8) {
+    }
+
+    /// DEBUG 下把诊断打成人读的一行。
+    private static func logDiagnostics(_ payload: [String: Any]) {
+        #if DEBUG
+        if let json = encodeDiagnostics(payload) {
             print("[Songly] \(json)")
         }
         #endif
     }
 
+    /// 序列化成稳定 JSON（`.sortedKeys` —— 同输入同字节，便于跨批次比对）。
+    ///
+    /// ⚠️ **刻意不包 `#if DEBUG`。** 落库要经过它，而 02:00 的后台任务跑的是
+    /// **Release 构建**。包上之后 Debug 一切正常、Release 静默产出零数据，
+    /// 且没有任何报错 —— 这是本次改动最容易踩、也最难发现的一个坑。
+    private static func encodeDiagnostics(_ payload: [String: Any]) -> String? {
+        guard let data = try? JSONSerialization.data(
+            withJSONObject: payload, options: [.sortedKeys]
+        ) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
     // MARK: - SwiftData Helpers (MainActor-isolated, Sendable-only params)
-
-    @MainActor
-    private func fetchLastSyncDate() -> Date? {
-        let context = modelContainer.mainContext
-        let results = try? context.fetch(FetchDescriptor<UserPreferences>())
-        return results?.first?.lastSyncDate
-    }
-
-    @MainActor
-    private func updateLastSyncDate() {
-        let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<UserPreferences>()
-        if let prefs = try? context.fetch(descriptor).first {
-            prefs.lastSyncDate = Date()
-        } else {
-            let newPrefs = UserPreferences()
-            newPrefs.lastSyncDate = Date()
-            context.insert(newPrefs)
-        }
-        try? context.save()
-    }
 
     private func loadTasteProfile() -> TasteProfile? {
         tasteProfileStore.load()
@@ -720,13 +899,21 @@ actor RecommendationEngine {
         let predicate = #Predicate<RecommendationRecord> { record in
             record.date >= today && record.date < tomorrow
                 && record.source == source
+                // 只数已完成的 —— 这一个数字决定歌单名后缀是 `20261001` 还是
+                // `20261001-02`。失败的那次没有建出任何歌单，不该占用一个序号。
+                && record.status == "completed"
         }
         let context = modelContainer.mainContext
         return (try? context.fetchCount(FetchDescriptor<RecommendationRecord>(predicate: predicate))) ?? 0
     }
 
-    /// 近 N 天里每位艺人出现过几次。喂给 composer 的层内排序首位 ——
-    /// 这是"每天都是同几个艺人"的真正解药，单次歌单内的上限治不了跨天重复。
+    /// 近 N 天里每位艺人出现过几次。喂给 composer 的**层内排序**。
+    ///
+    /// ⚠️ 它**挡不住任何人**：`takeNext` 会把整条队列走完，所以只要那一层候选不够，
+    /// 排序靠后的艺人照样会被选中。原先这里的注释写着它是「每天都是同几个艺人」的
+    /// 真正解药 —— **那句话是错的**，排序只是让重复的靠后一点。
+    /// 真正的闸门是 `AppConfig.artistBlockedWithinDays` 那三档
+    /// （见 `PlaylistComposer.Input.artistCap`）。
     @MainActor
     private func recentArtistCounts(windowDays: Int) -> [String: Int] {
         var counts: [String: Int] = [:]
@@ -738,12 +925,132 @@ actor RecommendationEngine {
         return counts
     }
 
+    /// 每位艺人最近一次出现在推荐里的日期（近 `artistCooldownDays` 天）。
+    ///
+    /// 与 `recentArtistCounts` 分开是**故意的**：那个数次数、用于排序，这个记日期、
+    /// 用于闸门。次数区分不了「3 天前 1 次」和「6 天前 1 次」，而这两档一个禁一个限。
+    ///
+    /// 只扫已完成的记录（`fetchRecentRecords` 已经保证）—— 失败运行的曲目从未出现在
+    /// 任何歌单里，拿它去禁一位艺人等于凭空惩罚。
+    @MainActor
+    private func fetchArtistRecency() -> ArtistRecencySignals {
+        var signals = ArtistRecencySignals()
+        for record in fetchRecentRecords(
+            windowDays: AppConfig.artistCooldownDays,
+            sources: ["daily", "quick_pick"]
+        ) {
+            for info in record.tracks {
+                let key = primaryArtistKey(info.artist)
+                guard !key.isEmpty else { continue }
+                // 记录已按 date 降序；显式比较是为了不依赖调用方给的顺序。
+                if let existing = signals.lastSeen[key], existing >= record.date { continue }
+                signals.lastSeen[key] = record.date
+                signals.displayNames[key] = info.artist
+            }
+        }
+        return signals
+    }
+
+    /// 隐式信号的输入：候选曲目 + 待比对的歌单。都要读记录，所以走主线程。
+    ///
+    /// **候选去重时两个字段取不同的一条记录**，这是刻意的：
+    /// - `hasExplicitVerdict` / `librarySyncedAt` 取**最新**那条（他现在的表态）；
+    /// - `firstRecommendedAt` 取**最早**那条（第一次推荐才是归因起点 —— 他在第 2 次
+    ///   推荐后才收藏时，用「最近」会漏判）。
+    @MainActor
+    private func collectImplicitInput() -> (
+        candidates: [ImplicitCandidate],
+        playlists: [ImplicitPlaylistTarget]
+    ) {
+        guard AppConfig.implicitSignalsEnabled else { return ([], []) }
+
+        // 已按 date 降序 → 第一次遇到某首歌时，手里就是最新那条记录。
+        let records = Array(fetchRecentRecords(
+            windowDays: AppConfig.implicitLookbackDays,
+            sources: ["daily", "quick_pick"]
+        ).prefix(AppConfig.maxImplicitLookbackRecords))
+
+        var newest: [String: (track: TrackInfo, playlistID: String?)] = [:]
+        var earliest: [String: Date] = [:]
+        var playlists: [ImplicitPlaylistTarget] = []
+
+        for record in records {
+            // 只有**建成过歌单**的记录才谈得上「他有没有删歌」。
+            if let playlistID = record.playlistID,
+               record.status == RecommendationRecord.statusCompleted,
+               !record.visibleTracks.isEmpty {
+                playlists.append(ImplicitPlaylistTarget(
+                    playlistID: playlistID,
+                    expectedKeys: record.visibleTracks.map(\.key)
+                ))
+            }
+
+            for track in record.tracks {
+                guard !track.id.isEmpty else { continue }
+                if newest[track.id] == nil {
+                    newest[track.id] = (track, record.playlistID)
+                }
+                if let existing = earliest[track.id] {
+                    if record.date < existing { earliest[track.id] = record.date }
+                } else {
+                    earliest[track.id] = record.date
+                }
+            }
+        }
+
+        let candidates = newest.compactMap { id, entry -> ImplicitCandidate? in
+            guard let first = earliest[id] else { return nil }
+            return ImplicitCandidate(
+                songID: id,
+                key: entry.track.key,
+                displayName: "\(entry.track.name) - \(entry.track.artist)",
+                artist: primaryArtistKey(entry.track.artist),
+                firstRecommendedAt: first,
+                playlistID: entry.playlistID,
+                hasExplicitVerdict: entry.track.verdict != nil,
+                librarySyncedAt: entry.track.librarySyncedAt
+            )
+        }
+        .sorted { $0.songID < $1.songID }        // 稳定顺序：诊断与测试都要可复现
+        .prefix(AppConfig.maxImplicitCandidateIDs)
+
+        return (Array(candidates), playlists)
+    }
+
+    /// 把本轮发现的「他删掉了」落进记录。
+    ///
+    /// 不落盘的话，这条排除会在记录滚出回看窗口时**蒸发** —— 而「删除应当永久生效」
+    /// 正是这套东西的设计前提。
+    ///
+    /// 调用时机很关键：它必须发生在 `deriveFeedback()` **之前**，这样同一轮里
+    /// `derive()` 就能读到刚落的值，`makeExclusions` 也就自动覆盖了全部历史。
+    @MainActor
+    private func persistImplicitRemovals(_ signals: ImplicitSignals) {
+        guard !signals.removedKeys.isEmpty else { return }
+        let store = FeedbackStore(context: modelContainer.mainContext)
+        for record in fetchRecentRecords(
+            windowDays: AppConfig.implicitLookbackDays,
+            sources: ["daily", "quick_pick"]
+        ) {
+            for track in record.tracks where signals.removedKeys.contains(track.key) {
+                _ = store.markImplicitRemoved(songID: track.id, in: record)
+            }
+        }
+    }
+
     @MainActor
     private func fetchRecentRecords(windowDays: Int, sources: [String]) -> [RecommendationRecord] {
         let context = modelContainer.mainContext
         let cutoff = Calendar.current.date(byAdding: .day, value: -windowDays, to: Date()) ?? Date.distantPast
         let predicate = #Predicate<RecommendationRecord> { record in
-            record.date >= cutoff && sources.contains(record.source)
+            record.date >= cutoff
+                && sources.contains(record.source)
+                // **只认已完成的。** 这条查询服务于去重窗口、艺人热度与「近 N 天
+                // 已推荐过」—— 用的是「用户见过什么」。而 `failed` 记录的曲目
+                // 从未出现在任何歌单里，放进来会把用户从没见过的歌排除掉。
+                // `pending` 同理：进程若在「落库」与「建歌单」之间被杀，那条记录
+                // 会永久留在库里，同样污染这两处（这是个既有隐患，顺手一并修掉）。
+                && record.status == "completed"
         }
         let descriptor = FetchDescriptor<RecommendationRecord>(
             predicate: predicate,
@@ -771,7 +1078,13 @@ actor RecommendationEngine {
         source: String,
         quickPickStyle: String?,
         playlistName: String?,
-        scene: String?
+        scene: String?,
+        status: String = RecommendationRecord.statusPending,
+        failureReason: String? = nil,
+        pipelineVersion: Int = 0,
+        promptVersion: Int = 0,
+        modelID: String? = nil,
+        diagnosticsJSON: String? = nil
     ) -> PersistentIdentifier? {
         let context = modelContainer.mainContext
         let record = RecommendationRecord(
@@ -782,8 +1095,13 @@ actor RecommendationEngine {
             source: source,
             quickPickStyle: quickPickStyle,
             playlistName: playlistName,
-            status: RecommendationRecord.statusPending,
-            scene: scene
+            status: status,
+            scene: scene,
+            pipelineVersion: pipelineVersion,
+            promptVersion: promptVersion,
+            modelID: modelID,
+            diagnosticsJSON: diagnosticsJSON,
+            failureReason: failureReason
         )
         context.insert(record)
         do {
@@ -792,6 +1110,41 @@ actor RecommendationEngine {
         } catch {
             return nil
         }
+    }
+
+    /// 落一条**失败**运行的记录。
+    ///
+    /// 存在的理由只有一个：让「今天为什么没出歌单」事后有据可查。
+    /// 在此之前这条路径什么都不留，用户只看到 App 没动静，我们连「是 LLM 没给够
+    /// seed，还是候选全被闸门挡掉了」都无从判断 —— 而这些信息在 `diagnosticsJSON` 里。
+    ///
+    /// 记录带着 `status == "failed"`，所有展示与去重路径都必须排除它
+    /// （见 `RecommendationRecord.statusFailed` 的注释）。
+    @MainActor
+    private func saveFailedRun(
+        date: Date,
+        source: String,
+        quickPickStyle: QuickPickStyle?,
+        reason: String,
+        tracks: [TrackInfo],
+        diagnosticsJSON: String?
+    ) -> PersistentIdentifier? {
+        saveRecommendation(
+            date: date,
+            strategy: RecommendationStrategy.styleExploration.rawValue,
+            songCount: tracks.count,
+            tracks: tracks,
+            source: source,
+            quickPickStyle: quickPickStyle?.rawValue,
+            playlistName: nil,
+            scene: nil,
+            status: RecommendationRecord.statusFailed,
+            failureReason: reason,
+            pipelineVersion: AppConfig.pipelineVersion,
+            promptVersion: AppConfig.promptVersion,
+            modelID: AppConfig.deepseekModel,
+            diagnosticsJSON: diagnosticsJSON
+        )
     }
 
     @MainActor
@@ -805,6 +1158,22 @@ actor RecommendationEngine {
         record.status = RecommendationRecord.statusCompleted
         record.playlistID = playlistID
         record.playlistURL = playlistURL
+        do {
+            try context.save()
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// 把一条已落库的记录标记为失败，**不删除** —— 它带着曲目与诊断，
+    /// 是「歌单为什么没建成」唯一的一手材料。
+    @MainActor
+    private func markRecommendationFailed(modelID: PersistentIdentifier, reason: String) -> Bool {
+        let context = modelContainer.mainContext
+        guard let record = context.model(for: modelID) as? RecommendationRecord else { return false }
+        record.status = RecommendationRecord.statusFailed
+        record.failureReason = reason
         do {
             try context.save()
             return true
