@@ -1,0 +1,6 @@
+// 乐遇 Songly — DeepSeek API Key 配置示例
+// 复制此文件为 Debug.xcconfig，替换为真实 API Key
+
+DEEPSEEK_API_KEY = sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+INFOPLIST_KEY_DEEPSEEK_API_KEY = $(DEEPSEEK_API_KEY)
