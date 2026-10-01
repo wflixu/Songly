@@ -589,28 +589,32 @@ static let treatPlaylistRemovalAsPermanent = true // diff 不可靠时改 false 
 
 # 第 3 项：旧歌单堆积
 
-> 状态：**已实施（2026-10-01），默认关闭**。用户选择了「保留最近 N 份，其余自动删」。
+> 状态：**已决定不做（2026-10-01）—— 保持手动删除。**
 >
-> **实施记录**：`MusicLibraryService.deletePlaylist(playlistID:)`（手写 REST DELETE，
-> **不抛错**）+ 引擎收尾的 `pruneOldPlaylists()`（完成态**之后**跑，失败不影响刚建成的
-> 那一份）+ `AppConfig.keepRecentPlaylists = 7`。
+> 曾经按「保留最近 N 份、其余自动删」实现过一版（见提交 `fd88473`），
+> 后来**整段撤掉**了：用户确认手动删可以接受，而那段代码永远不会有打开的那一天。
 >
-> ⚠️ **`autoDeleteOldPlaylists` 默认 false。** 这是整套东西里唯一一个**不可撤销的
-> 破坏性操作**（删掉就是删掉了），而它依赖的那个 REST 端点开发者社区长期反馈返回 403。
-> 先在设置页 DEBUG 区跑「探测：删除歌单」—— 那个探测会**新建一份一次性空歌单再删它**，
-> 绝不碰用户已有的歌单 —— 拿到结论再打开。
+> **为什么不做**：MusicKit 的 Swift API **根本没有删除能力** —— `MusicLibrary`
+> 的全部成员只有 `add` / `add(to:)` / `createPlaylist` / `edit`（逐行核对过
+> iOS 27 SDK 的 `.swiftinterface`）。只能手写 REST 打
+> `DELETE /v1/me/library/playlists/{id}`，而那个端点被开发者社区长期反馈返回 **403**。
+> 为什么 Apple 关掉它，没人知道 —— 能确定的是它**不是**「只能删自己建的」那条规则，
+> 因为那份歌单就是我们建的。
 >
-> **两个刻意的设计选择**：
+> **撤掉的是**：`AppConfig.autoDeleteOldPlaylists` / `keepRecentPlaylists`、
+> `MusicLibraryServicing.deletePlaylist`、引擎的 `pruneOldPlaylists()` 与它的调用点、
+> 以及引擎多出来的那个 `libraryService` 依赖。
+> 一个默认关闭、且已被决定不再启用的开关，留在代码里就是死代码，还会给
+> `MusicLibraryServicing` 加一条所有未来测试替身都得实现的协议要求。
 >
-> 1. **删不掉就不清本地引用。** 删除失败时记录仍保留 `playlistID` —— 本地指向的还是一份
->    真实存在的歌单，清掉反而会让用户以为它没了。下一轮还会再试。
-> 2. **曲目与日期全部保留**，只清 `playlistID` / `playlistURL`。那是历史与迭代数据
->    （第 5 项存在的意义），清理歌单不该动它。不清那两列的话，详情页的
->    「在 Apple Music 中打开」会跳死链。
+> **保留的是设置页那个「探测：删除歌单」按钮**（DEBUG-only，十几行，零风险）。
+> 它是唯一能回答「Apple 后来放开了没有」的东西 —— 而且**这个项目自己就是反例**：
+> 社区同样说「playlist editing 仅限于 API 创建的列表」，而 `createPlaylist` 明明是通的。
+> 那批 403 报告大多来自 2018–2024 年，旧结论不一定还成立。
 >
-> ⚠️ **`keepRecentPlaylists` 必须 ≥ `maxPlaylistDiffsPerRun`(3)。** 隐式信号的歌单 diff
-> 要看最近几份歌单，调小前者会让「他有没有删歌」静默失效（查不到歌单 →
-> 记 `playlist_missing` → 什么都不标）。这个约束写在 `AppConfig` 那条常量的注释里。
+> **如果哪天探测回来说通了**，退路有两条，但都要重做隐式信号的歌单 diff：
+> ① 每天覆写同一份歌单；② 固定 7 份轮换（周一到周日）。两者都让「他昨天删了哪首」
+> 失去比对对象。
 
 ## 已查证的事实
 
@@ -978,7 +982,7 @@ var diagnosticsJSON: String? = nil
 | 第 5 项 迭代数据底座 | ✅ | ✅ 导出已实测（见该节基线数据）|
 | 第 2 项 跨天艺人闸门 | ✅ | ❌ 待验证（设备上还是旧构建）|
 | 第 1 项 隐式反馈闭环 | ✅ | ❌ 三项探测待跑；评分读取默认关闭 |
-| 第 3 项 旧歌单清理 | ✅ | ❌ DELETE 探测待跑；默认关闭 |
+| 第 3 项 旧歌单清理 | ➖ **已决定不做** | —（保持手动删；探测按钮保留）|
 | 第 4 项 设置页重构 | ✅ | ❌ 折叠态观感待看 |
 
 **累计**：`SonglyTests` 185 条全绿（新增 34 条），Debug / Release 双配置构建通过，

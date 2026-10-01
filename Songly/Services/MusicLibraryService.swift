@@ -70,9 +70,6 @@ protocol MusicLibraryServicing: Sendable {
     func setLovedRating(songID: String) async throws
     /// 批量读回评分。**不抛错**，失败体现在 `failure` 里。
     func readRatings(songIDs: [String]) async -> RatingReadResult
-    /// 删除一份**我们建的**播放列表。**不抛错** —— 清理是尽力而为的副作用，
-    /// 失败不该影响刚建成的那份歌单。
-    func deletePlaylist(playlistID: String) async -> Bool
 }
 
 // MARK: - Service
@@ -264,28 +261,6 @@ final class MusicLibraryService: MusicLibraryServicing {
             ratings[id] = value
         }
         return ratings
-    }
-
-    // MARK: 删除播放列表
-
-    /// 删除一份播放列表。**不抛错**：调用方是清理旧歌单的收尾步骤，
-    /// 失败最多是「这次没清掉」，不该把一次成功的推荐变成一次报错。
-    ///
-    /// ⚠️ MusicKit 的 Swift API **没有**删除能力（`MusicLibrary` 只有
-    /// `add` / `createPlaylist` / `edit`），只能手写 REST。
-    func deletePlaylist(playlistID: String) async -> Bool {
-        guard let url = URL(string:
-            "https://api.music.apple.com/v1/me/library/playlists/\(playlistID)"
-        ) else { return false }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-        do {
-            let response = try await MusicDataRequest(urlRequest: request).response()
-            return (200..<300).contains(response.urlResponse.statusCode)
-        } catch {
-            return false
-        }
     }
 
     // MARK: 探测：读回评分

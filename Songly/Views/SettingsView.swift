@@ -586,7 +586,8 @@ struct SettingsView: View {
             Text("写回探测：确认 PUT 端点与请求体形状，结论决定 writeBackLovedRating。\n"
                  + "读回探测：确认 ⭐ 收藏读不读得到，结论决定 readAppleMusicRatings。\n"
                  + "歌单条目探测：确认歌单 diff 能不能做（匹配率 < 90% 就得整个关掉）。\n"
-                 + "删除探测：确认删歌单可不可用，决定第 3 项怎么做。")
+                 + "删除探测：确认 Apple 到底允不允许删歌单。**这一项已经决定不做了**"
+                 + "（手动删就好），探测留着只是万一 Apple 以后放开、能马上知道。")
         }
     }
 

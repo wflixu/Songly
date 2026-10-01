@@ -186,27 +186,6 @@ enum AppConfig {
     /// 那个动作本来就该是永不放宽的。
     static let treatPlaylistRemovalAsPermanent = false
 
-    // MARK: - 旧歌单清理
-
-    /// 保留最近几份歌单，其余自动删。用户选定 7 —— 约一周（他每天 1–2 份）。
-    ///
-    /// ⚠️ **这个数不能小到影响隐式信号的歌单 diff。** 那边单次最多 diff
-    /// `maxPlaylistDiffsPerRun`(3) 份，7 ≥ 3 是安全的；若以后调小这个值，
-    /// 必须同时确认那个约束还成立，否则「他有没有删歌」会静默失效
-    /// （查不到歌单 → 记 `playlist_missing` → 什么都不标）。
-    static let keepRecentPlaylists = 7
-
-    /// 是否自动删除旧歌单。
-    ///
-    /// 默认 **false** —— 与 `writeBackLovedRating` / `readAppleMusicRatings` 同一理由，
-    /// 而且这里更重：它是**不可撤销的破坏性操作**（删掉就是删掉了），
-    /// 走的又是 REST（`DELETE /v1/me/library/playlists/{id}`），
-    /// 而开发者社区长期反馈这个端点返回 403。
-    ///
-    /// 先在设置页 DEBUG 区跑「探测：删除歌单」（它会新建一份一次性歌单再删它，
-    /// 不碰用户已有的歌单），拿到结论再打开。
-    static let autoDeleteOldPlaylists = false
-
     // MARK: - 版本标识（数据批次的可比性）
 
     /// 推荐管线的版本号。**改了算法就手工 +1**，没有任何机制会自动改它。
